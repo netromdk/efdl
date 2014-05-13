@@ -39,21 +39,30 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
 
   int code = rep->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   qDebug() << "CODE" << code;
-  //qDebug() << rep->rawHeaderPairs();
+  //qDebug() << "HEADERS" << rep->rawHeaderPairs();
 
   // Handle redirect.
   if (code >= 300 && code < 400) {
-    QVariant res = rep->header(QNetworkRequest::LocationHeader);
-    if (!res.isValid()) {
+    if (!rep->hasRawHeader("Location")) {
       qCritical() << "Could not resolve URL!";
       return nullptr;
     }    
-    QUrl loc{res.toString(), QUrl::StrictMode};
+
+    QString locHdr = QString::fromUtf8(rep->rawHeader("Location"));
+
+    QUrl loc{locHdr, QUrl::StrictMode};
     if (!loc.isValid()) {
       qCritical() << "Invalid redirection header:" <<
         qPrintable(loc.toString());
       return nullptr;
     }
+
+    // If relative then try using the last scheme/host.
+    if (loc.isRelative()) {
+      loc.setScheme(url.scheme());
+      loc.setHost(url.host());
+    }
+
     qDebug() << "REDIRECT" << qPrintable(loc.toString());
     rep->abort();
     rep = getHead(loc);
