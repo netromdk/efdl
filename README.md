@@ -1,4 +1,5 @@
 efdl
 ====
 
-efdl is an efficient downloading CLI program for HTTP/HTTPS.
+efdl, pronounced "Eff-dell", is an efficient downloading application
+over HTTP/HTTPS.
