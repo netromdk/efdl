@@ -5,6 +5,7 @@
 #include <QNetworkAccessManager>
 
 class QUrl;
+class QNetworkReply;
 
 class Downloader : public QObject {
   Q_OBJECT
@@ -19,6 +20,8 @@ public slots:
   void start();
   
 private:
+  QNetworkReply *getHead(const QUrl &url);
+  
   const QUrl &url;
   QNetworkAccessManager netmgr;
 };

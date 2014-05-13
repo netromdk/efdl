@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   parser.process(app);
   const QStringList args = parser.positionalArguments();
 
-  QUrl url(args[0], QUrl::StrictMode);
+  QUrl url{args[0], QUrl::StrictMode};
   if (!url.isValid()) {
     qCritical() << "Invalid URL!";
     return -1;

@@ -6,6 +6,9 @@ ADD_EXECUTABLE(
   main.cpp
   Version.h
 
+  Util.h
+  Util.cpp
+
   Downloader.h
   Downloader.cpp
   )
