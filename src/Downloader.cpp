@@ -173,6 +173,7 @@ void Downloader::download() {
     QCoreApplication::exit(-1);
     return;    
   }
+  file.close();
 
   qDebug() << "SUCCESS";
   emit finished();
