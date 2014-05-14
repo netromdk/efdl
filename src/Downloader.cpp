@@ -53,6 +53,9 @@ void Downloader::start() {
   reply->close();
   reply = nullptr;
 
+  // Create ranges.
+  createRanges();
+
   // Start actual download.
   download();
 }
@@ -121,8 +124,8 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
   return rep;
 }
 
-void Downloader::download() {
-  qDebug() << "DOWNLOAD" << qPrintable(url.path());
+void Downloader::createRanges() {
+  ranges.clear();
 
   constexpr qint64 chunkSize = 1048576;
   for (qint64 start = 0; start < contentLen; start += chunkSize) {
@@ -130,7 +133,18 @@ void Downloader::download() {
     if (end >= contentLen) {
       end = contentLen;
     }
-    if (!getChunk(start, end - 1)) {
+    ranges.enqueue(Range{start, end - 1});
+  }
+
+  qDebug() << "CHUNKS" << ranges.size();
+}
+
+void Downloader::download() {
+  qDebug() << "DOWNLOAD" << qPrintable(url.path());
+
+  while (!ranges.empty()) {
+    auto range = ranges.dequeue();
+    if (!getChunk(range.first, range.second)) {
       // TODO: do something better!
       qCritical() << "ERROR Invalid response!";
       QCoreApplication::exit(-1);
