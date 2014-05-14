@@ -1,6 +1,7 @@
 #ifndef EFDL_DOWNLOADER_H
 #define EFDL_DOWNLOADER_H
 
+#include <QUrl>
 #include <QObject>
 #include <QByteArray>
 #include <QNetworkAccessManager>
@@ -25,7 +26,7 @@ private:
   void download();
   bool getChunk(qint64 start, qint64 end);
   
-  const QUrl &url;
+  QUrl url;
   qint64 contentLen;
   bool continuable;
 

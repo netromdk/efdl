@@ -1,4 +1,3 @@
-#include <QUrl>
 #include <QDir>
 #include <QDebug>
 #include <QFileInfo>
@@ -21,6 +20,7 @@ void Downloader::start() {
     QCoreApplication::exit(-1);
     return;
   }
+  url = reply->url();
 
   // Find "Content-Length".
   if (!reply->hasRawHeader("Content-Length")) {
@@ -48,6 +48,10 @@ void Downloader::start() {
   }
   qDebug() << qPrintable(QString("%1CONTINUABLE").
                          arg(continuable ? "" : "NOT "));
+
+  // Clean reply.
+  reply->close();
+  reply = nullptr;
 
   // Start actual download.
   download();
@@ -118,10 +122,9 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
 }
 
 void Downloader::download() {
-  const auto url = reply->url();
   qDebug() << "DOWNLOAD" << qPrintable(url.path());
 
-  qint64 chunkSize = 8192;
+  constexpr qint64 chunkSize = 1048576;
   for (qint64 start = 0; start < contentLen; start += chunkSize) {
     qint64 end = start + chunkSize;
     if (end >= contentLen) {
@@ -146,7 +149,11 @@ void Downloader::download() {
 
   QFileInfo fi{url.path()};
   QDir dir{QCoreApplication::instance()->applicationDirPath()};
-  QString path = dir.absoluteFilePath(fi.baseName() + "." + fi.suffix());
+  QString path{dir.absoluteFilePath(fi.baseName())};
+  QString suf{fi.suffix()};
+  if (!suf.isEmpty()) {
+    path.append("." + fi.suffix());
+  }
   qDebug() << "FILE" << qPrintable(path);
 
   QFile file{path};
@@ -183,12 +190,15 @@ bool Downloader::getChunk(qint64 start, qint64 end) {
 
   int code = rep->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   qDebug() << "CODE" << code;
+  //qDebug() << "HEADERS" << rep->rawHeaderPairs();
 
   // Partial download.
+  bool ok = false;
   if (code == 206) {
+    ok = true;
     data.append(rep->readAll());
-    return true;
   }
 
-  return false;
+  rep->close();
+  return ok;
 }
