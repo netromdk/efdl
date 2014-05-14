@@ -2,6 +2,7 @@
 #define EFDL_DOWNLOADER_H
 
 #include <QObject>
+#include <QByteArray>
 #include <QNetworkAccessManager>
 
 class QUrl;
@@ -21,9 +22,17 @@ public slots:
   
 private:
   QNetworkReply *getHead(const QUrl &url);
+  void download();
+  bool getChunk(qint64 start, qint64 end);
   
   const QUrl &url;
+  qint64 contentLen;
+  bool continuable;
+
   QNetworkAccessManager netmgr;
+  QNetworkReply *reply;
+
+  QByteArray data;
 };
 
 #endif // EFDL_DOWNLOADER_H
