@@ -18,10 +18,11 @@ public:
   void setFile(QFile *file) { this->file = file; }
 
 public slots:
-  void saveChunk(const QByteArray *data, bool last = false);
+  void enqueueChunk(const QByteArray *data, bool last = false);
 
 private:
   void run() override;
+  void cleanup();
   
   QFile *file;
   bool last;

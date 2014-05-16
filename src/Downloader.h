@@ -26,6 +26,8 @@ public:
 
 signals: 
   void finished();
+
+  // Internal signal.
   void chunkToThread(const QByteArray *data, bool last);
     
 public slots:

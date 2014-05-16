@@ -18,7 +18,8 @@ Downloader::Downloader(const QUrl &url, int conns)
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
   connect(this, &Downloader::chunkToThread,
-          &commitThread, &CommitThread::saveChunk, Qt::QueuedConnection);
+          &commitThread, &CommitThread::enqueueChunk,
+          Qt::QueuedConnection);
 }
 
 void Downloader::start() {

@@ -5,14 +5,10 @@
 CommitThread::CommitThread() : file{nullptr}, last{false} { }
 
 CommitThread::~CommitThread() {
-  if (file) {
-    file->close();
-    delete file;
-    file = nullptr;
-  }
+  cleanup();
 }
 
-void CommitThread::saveChunk(const QByteArray *data, bool last) {
+void CommitThread::enqueueChunk(const QByteArray *data, bool last) {
   QMutexLocker locker(&queueMutex);
   this->last = last;
   queue.enqueue(data);
@@ -49,6 +45,10 @@ void CommitThread::run() {
     msleep(10);
   }
 
+  cleanup();
+}
+
+void CommitThread::cleanup() {
   if (file) {
     file->close();
     delete file;
