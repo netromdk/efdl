@@ -19,15 +19,14 @@ int main(int argc, char **argv) {
   parser.addVersionOption();
   parser.addPositionalArgument("URL", QObject::tr("URL to download."));
 
-  QCommandLineOption connsOpt(QStringList{"c", "connections"},
+  QCommandLineOption connsOpt(QStringList{"c", "conns"},
                               QObject::tr("Number of simultaneous connections to"
-                                          "use. (defaults to 1)"),
+                                          " use. (defaults to 1)"),
                               QObject::tr("num"));
   parser.addOption(connsOpt);
 
   QCommandLineOption confirmOpt(QStringList{"confirm"},
-                                QObject::tr("Confirm to download on redirections. "
-                                            "(defaults to not asking)"));
+                                QObject::tr("Confirm to download on redirections."));
   parser.addOption(confirmOpt);
 
   QCommandLineOption verboseOpt(QStringList{"verbose"},
