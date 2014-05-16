@@ -22,7 +22,8 @@ class Downloader : public QObject {
   Q_OBJECT
   
 public:
-  Downloader(const QUrl &url, int conns, bool confirm, bool verbose);
+  Downloader(const QUrl &url, int conns, int chunks, int chunkSize, bool confirm,
+             bool verbose);
 
 signals: 
   void finished();
@@ -47,7 +48,7 @@ private:
   void saveChunk();
   
   QUrl url;
-  int conns, downloadCount, rangeCount;
+  int conns, chunks, chunkSize, downloadCount, rangeCount;
   qint64 contentLen;
   bool confirm, verbose, continuable;
 
@@ -58,7 +59,7 @@ private:
 
   QQueue<Range> ranges;
   QThreadPool pool;
-  QMap<qint64, QByteArray*> chunks; // range start -> data pointer
+  QMap<qint64, QByteArray*> chunksMap; // range start -> data pointer
   CommitThread commitThread;
 };
 

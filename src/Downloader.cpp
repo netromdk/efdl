@@ -11,9 +11,11 @@
 #include "Downloader.h"
 #include "DownloadTask.h"
 
-Downloader::Downloader(const QUrl &url, int conns, bool confirm, bool verbose)
-  : url{url}, conns{conns}, downloadCount{0}, rangeCount{0}, contentLen{0},
-  confirm{confirm}, verbose{verbose}, continuable{false}, reply{nullptr}
+Downloader::Downloader(const QUrl &url, int conns, int chunks, int chunkSize,
+                       bool confirm, bool verbose)
+  : url{url}, conns{conns}, chunks{chunks}, chunkSize{chunkSize},
+  downloadCount{0}, rangeCount{0}, contentLen{0}, confirm{confirm},
+  verbose{verbose}, continuable{false}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
@@ -75,7 +77,7 @@ void Downloader::start() {
 
 void Downloader::onDownloadTaskFinished(Range range, QByteArray *data) {
   QMutexLocker locker{&finishedMutex};
-  chunks[range.first] = data;
+  chunksMap[range.first] = data;
   downloadCount++;
   qDebug() << "DL" << float(downloadCount) / float(rangeCount) * 100.0 << "%";
   saveChunk();
@@ -181,16 +183,30 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
 
 void Downloader::createRanges() {
   ranges.clear();
-  chunks.clear();
+  chunksMap.clear();
 
-  constexpr qint64 chunkSize = 1048576;
-  for (qint64 start = 0; start < contentLen; start += chunkSize) {
-    qint64 end = start + chunkSize;
+  qint64 size = 1048576;
+  if (chunkSize != -1) {
+    size = chunkSize;
+  }
+  else if (chunks != -1) {
+    size = contentLen / chunks;
+  }
+  else if (conns > 4) {
+    size = contentLen / conns;
+  }
+
+  if (verbose) {
+    qDebug() << "CHUNK SIZE" << size;
+  }
+
+  for (qint64 start = 0; start < contentLen; start += size) {
+    qint64 end = start + size;
     if (end >= contentLen) {
       end = contentLen;
     }
     ranges.enqueue(Range{start, end - 1});
-    chunks[start] = nullptr;
+    chunksMap[start] = nullptr;
   }
   rangeCount = ranges.size();
 
@@ -253,19 +269,19 @@ void Downloader::saveChunk() {
   // Lock on chunks map is required to be acquired going into this
   // method!
 
-  if (chunks.isEmpty()) {
+  if (chunksMap.isEmpty()) {
     // Wait for commit thread to be done.
     return;
   }
 
-  auto key = chunks.firstKey();
-  const auto *value = chunks[key];
+  auto key = chunksMap.firstKey();
+  const auto *value = chunksMap[key];
   if (value != nullptr) {
-    emit chunkToThread(value, chunks.size() == 1);
+    emit chunkToThread(value, chunksMap.size() == 1);
     if (!commitThread.isRunning()) {
       commitThread.start();
     }
-    chunks.remove(key);
+    chunksMap.remove(key);
   }
 
   // If everything has been downloaded then call method again.
