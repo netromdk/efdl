@@ -233,7 +233,7 @@ void Downloader::download() {
   }
 
   QFileInfo fi{url.path()};
-  QDir dir{QCoreApplication::instance()->applicationDirPath()};
+  QDir dir = QDir::current();
   QString path{dir.absoluteFilePath(fi.baseName())};
   QString suf{fi.suffix()};
   if (!suf.isEmpty()) {
