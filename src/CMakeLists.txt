@@ -14,6 +14,9 @@ ADD_EXECUTABLE(
 
   DownloadTask.h
   DownloadTask.cpp
+
+  CommitThread.h
+  CommitThread.cpp
   )
 
 QT5_USE_MODULES(${NAME} Core Network)

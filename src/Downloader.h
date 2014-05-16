@@ -13,6 +13,7 @@
 #include <QNetworkAccessManager>
 
 #include "Range.h"
+#include "CommitThread.h"
 
 class QUrl;
 class QNetworkReply;
@@ -25,6 +26,7 @@ public:
 
 signals: 
   void finished();
+  void chunkToThread(const QByteArray *data, bool last);
     
 public slots:
   void start();
@@ -33,6 +35,7 @@ private slots:
   void onDownloadTaskFinished(Range range, QByteArray *data);
   void onDownloadTaskFailed(Range range, int httpCode,
                             QNetworkReply::NetworkError error);
+  void onCommitThreadFinished();
   
 private:
   QNetworkReply *getHead(const QUrl &url);
@@ -54,6 +57,7 @@ private:
   QQueue<Range> ranges;
   QThreadPool pool;
   QMap<qint64, QByteArray*> chunks; // range start -> data pointer
+  CommitThread commitThread;
 };
 
 #endif // EFDL_DOWNLOADER_H

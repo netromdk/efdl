@@ -14,7 +14,12 @@
 Downloader::Downloader(const QUrl &url, int conns)
   : url{url}, conns{conns}, downloadCount{0}, rangeCount{0}, contentLen{0},
   continuable{false}, reply{nullptr}
-{ }
+{
+  connect(&commitThread, &CommitThread::finished,
+          this, &Downloader::onCommitThreadFinished);
+  connect(this, &Downloader::chunkToThread,
+          &commitThread, &CommitThread::saveChunk, Qt::QueuedConnection);
+}
 
 void Downloader::start() {
   // Fetch HEAD to find out the size but also if it exists.
@@ -65,15 +70,20 @@ void Downloader::start() {
 
 void Downloader::onDownloadTaskFinished(Range range, QByteArray *data) {
   QMutexLocker locker{&finishedMutex};
-  qDebug() << "finished" << range << data->size();
   chunks[range.first] = data;
   downloadCount++;
+  qDebug() << "DL" << float(downloadCount) / float(rangeCount) * 100.0 << "%";
   saveChunk();
 }
 
 void Downloader::onDownloadTaskFailed(Range range, int httpCode,
                                       QNetworkReply::NetworkError error) {
   qDebug() << "failed" << range << Util::getErrorString(error);
+}
+
+void Downloader::onCommitThreadFinished() {
+  qDebug() << "SUCCESS";
+  emit finished();
 }
 
 QNetworkReply *Downloader::getHead(const QUrl &url) {
@@ -173,6 +183,27 @@ void Downloader::setupThreadPool() {
 void Downloader::download() {
   qDebug() << "DOWNLOAD" << qPrintable(url.path());
 
+  QFileInfo fi{url.path()};
+  QDir dir{QCoreApplication::instance()->applicationDirPath()};
+  QString path{dir.absoluteFilePath(fi.baseName())};
+  QString suf{fi.suffix()};
+  if (!suf.isEmpty()) {
+    path.append("." + fi.suffix());
+  }
+  qDebug() << "FILE" << qPrintable(path);
+
+  auto *file = new QFile{path};
+  if (file->exists()) {
+    QFile::remove(path);
+  }
+  if (!file->open(QIODevice::WriteOnly)) {
+    qCritical() << "ERROR Could not open file for writing!";
+    delete file;
+    QCoreApplication::exit(-1);
+    return;
+  }
+  commitThread.setFile(file);
+
   // Fill queue with tasks and start immediately.
   while (!ranges.empty()) {
     auto range = ranges.dequeue();
@@ -183,48 +214,6 @@ void Downloader::download() {
             this,  &Downloader::onDownloadTaskFailed);
     pool.start(task);
   }
-
-  /*
-  qDebug() << "RETRIEVED" << data.size();
-
-  if (data.size() != contentLen) {
-    qCritical() << "ERROR Downloaded data length does not match! Got"
-                << data.size() << "vs." << contentLen;
-    QCoreApplication::exit(-1);    
-    return;
-  }
-
-  QFileInfo fi{url.path()};
-  QDir dir{QCoreApplication::instance()->applicationDirPath()};
-  QString path{dir.absoluteFilePath(fi.baseName())};
-  QString suf{fi.suffix()};
-  if (!suf.isEmpty()) {
-    path.append("." + fi.suffix());
-  }
-  qDebug() << "FILE" << qPrintable(path);
-
-  QFile file{path};
-  if (file.exists()) {
-    QFile::remove(path);
-  }
-  if (!file.open(QIODevice::WriteOnly)) {
-    qCritical() << "ERROR Could not open file for writing!";
-    QCoreApplication::exit(-1);
-    return;
-  }
-
-  qint64 wrote;
-  if ((wrote = file.write(data)) != data.size()) {
-    qCritical() << "ERROR Could not write the entire data:"
-                << wrote << "of" << data.size();
-    QCoreApplication::exit(-1);
-    return;    
-  }
-  file.close();
-
-  qDebug() << "SUCCESS";
-  emit finished();
-  */
 }
 
 void Downloader::saveChunk() {
@@ -232,16 +221,18 @@ void Downloader::saveChunk() {
   // method!
 
   if (chunks.isEmpty()) {
-    qDebug() << "no more";
+    // Wait for commit thread to be done.
     return;
   }
 
   auto key = chunks.firstKey();
   const auto *value = chunks[key];
   if (value != nullptr) {
-    // TODO: save it
+    emit chunkToThread(value, chunks.size() == 1);
+    if (!commitThread.isRunning()) {
+      commitThread.start();
+    }
     chunks.remove(key);
-    qDebug() << "saved" << key;
   }
 
   // If everything has been downloaded then call method again.
