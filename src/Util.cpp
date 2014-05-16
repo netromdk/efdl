@@ -1,4 +1,7 @@
+#include <iostream>
+
 #include <QObject>
+#include <QTextStream>
 
 #include "Util.h"
 #include "Range.h"
@@ -87,4 +90,14 @@ QString Util::getErrorString(QNetworkReply::NetworkError error) {
   default:
     return QString::number(error);
   }
+}
+
+bool Util::askProcess(const QString &msg) {
+  using namespace std;
+  cout << msg.toStdString().c_str();
+  cout.flush();
+
+  QTextStream stream(stdin);
+  QString output = stream.readLine().toLower().trimmed();
+  return output == "y" || output == "yes";
 }

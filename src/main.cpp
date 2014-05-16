@@ -20,9 +20,15 @@ int main(int argc, char **argv) {
   parser.addPositionalArgument("URL", QObject::tr("URL to download."));
 
   QCommandLineOption connsOpt(QStringList{"c", "connections"},
-                              QObject::tr("Number of simultaneous connections to use. (defaults to 1)"),
+                              QObject::tr("Number of simultaneous connections to"
+                                          "use. (defaults to 1)"),
                               QObject::tr("num"));
   parser.addOption(connsOpt);
+
+  QCommandLineOption confirmOpt(QStringList{"confirm"},
+                              QObject::tr("Confirm to download on redirections. "
+                                          "(defaults to not asking)"));
+  parser.addOption(confirmOpt);
 
   // Process CLI arguments.
   parser.process(app);
@@ -41,6 +47,8 @@ int main(int argc, char **argv) {
     }
   }
 
+  bool confirm = parser.isSet(confirmOpt);
+
   QUrl url{args[0], QUrl::StrictMode};
   if (!url.isValid()) {
     qCritical() << "ERROR Invalid URL!";
@@ -57,7 +65,7 @@ int main(int argc, char **argv) {
   Util::registerCustomTypes();
 
   // Begin transfer in event loop.
-  Downloader dl{url, conns};
+  Downloader dl{url, conns, confirm};
   QObject::connect(&dl, &Downloader::finished, &app, &QCoreApplication::quit);
   QTimer::singleShot(0, &dl, SLOT(start()));
 

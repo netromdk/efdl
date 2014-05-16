@@ -11,9 +11,9 @@
 #include "Downloader.h"
 #include "DownloadTask.h"
 
-Downloader::Downloader(const QUrl &url, int conns)
+Downloader::Downloader(const QUrl &url, int conns, bool confirm)
   : url{url}, conns{conns}, downloadCount{0}, rangeCount{0}, contentLen{0},
-  continuable{false}, reply{nullptr}
+  confirm{confirm}, continuable{false}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
@@ -106,6 +106,19 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
   qDebug() << "CODE" << code;
   //qDebug() << "HEADERS" << rep->rawHeaderPairs();
 
+  static bool didRedir = false;
+
+  if (code >= 200 && code < 300) {
+    qDebug() << "Resolved URL:" << qPrintable(url.toString());
+    if (confirm && didRedir) {
+      if (!Util::askProcess(tr("Do you want to continue?") + " [y/N] ")) {
+        rep->abort();
+        qCritical() << "Aborting..";
+        return nullptr;
+      }
+    }
+  }
+
   // Handle redirect.
   if (code >= 300 && code < 400) {
     if (!rep->hasRawHeader("Location")) {
@@ -130,6 +143,7 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
     }
 
     qDebug() << "REDIRECT" << qPrintable(loc.toString());
+    didRedir = true;
     rep->abort();
     rep = getHead(loc);
   }
