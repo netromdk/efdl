@@ -92,7 +92,7 @@ QString Util::getErrorString(QNetworkReply::NetworkError error) {
   }
 }
 
-bool Util::askProcess(const QString &msg) {
+bool Util::askProceed(const QString &msg) {
   using namespace std;
   cout << msg.toStdString().c_str();
   cout.flush();

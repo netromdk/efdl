@@ -111,7 +111,7 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
   if (code >= 200 && code < 300) {
     qDebug() << "Resolved URL:" << qPrintable(url.toString());
     if (confirm && didRedir) {
-      if (!Util::askProcess(tr("Do you want to continue?") + " [y/N] ")) {
+      if (!Util::askProceed(tr("Do you want to continue?") + " [y/N] ")) {
         rep->abort();
         qCritical() << "Aborting..";
         return nullptr;

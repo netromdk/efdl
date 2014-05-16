@@ -8,7 +8,7 @@ class Util {
 public:
   static void registerCustomTypes();
   static QString getErrorString(QNetworkReply::NetworkError error);
-  static bool askProcess(const QString &msg);
+  static bool askProceed(const QString &msg);
 };
 
 #endif // EFDL_UTIL_H
