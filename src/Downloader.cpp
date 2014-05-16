@@ -8,9 +8,10 @@
 
 #include "Util.h"
 #include "Downloader.h"
+#include "DownloadTask.h"
 
-Downloader::Downloader(const QUrl &url)
-  : url{url}, contentLen{0}, continuable{false}, reply{nullptr}
+Downloader::Downloader(const QUrl &url, int conns)
+  : url{url}, conns{conns}, contentLen{0}, continuable{false}, reply{nullptr}
 { }
 
 void Downloader::start() {
@@ -53,11 +54,21 @@ void Downloader::start() {
   reply->close();
   reply = nullptr;
 
-  // Create ranges.
   createRanges();
+  setupThreadPool();
 
   // Start actual download.
   download();
+}
+
+void Downloader::onDownloadTaskFinished(Range range, QByteArray *data) {
+  qDebug() << "finished" << range << data->size();
+  delete data;
+}
+
+void Downloader::onDownloadTaskFailed(Range range, int httpCode,
+                                      QNetworkReply::NetworkError error) {
+  qDebug() << "failed" << range << Util::getErrorString(error);
 }
 
 QNetworkReply *Downloader::getHead(const QUrl &url) {
@@ -139,19 +150,33 @@ void Downloader::createRanges() {
   qDebug() << "CHUNKS" << ranges.size();
 }
 
+void Downloader::setupThreadPool() {
+  // Cap connections to the amount of chunks to download.
+  if (conns > ranges.size()) {
+    int old{conns};
+    conns = ranges.size();
+    qDebug() << "CAP connection amount capped to amount of chunks:"
+             << old << "->" << conns;
+  }
+
+  pool.setMaxThreadCount(conns);
+}
+
 void Downloader::download() {
   qDebug() << "DOWNLOAD" << qPrintable(url.path());
 
+  // Fill queue with tasks and start immediately.
   while (!ranges.empty()) {
     auto range = ranges.dequeue();
-    if (!getChunk(range.first, range.second)) {
-      // TODO: do something better!
-      qCritical() << "ERROR Invalid response!";
-      QCoreApplication::exit(-1);
-      return;
-    }
+    auto *task = new DownloadTask{url, range};
+    connect(task, &DownloadTask::finished,
+            this, &Downloader::onDownloadTaskFinished);
+    connect(task, &DownloadTask::failed,
+            this,  &Downloader::onDownloadTaskFailed);
+    pool.start(task);
   }
 
+  /*
   qDebug() << "RETRIEVED" << data.size();
 
   if (data.size() != contentLen) {
@@ -191,29 +216,5 @@ void Downloader::download() {
 
   qDebug() << "SUCCESS";
   emit finished();
-}
-
-bool Downloader::getChunk(qint64 start, qint64 end) {
-  QString range = QString("bytes=%1-%2").arg(start).arg(end);
-  qDebug() << "RANGE" << qPrintable(range);
-  QNetworkRequest req{url};
-  req.setRawHeader("Range", range.toUtf8());
-  auto *rep = netmgr.get(req);
-  QEventLoop loop;
-  connect(rep, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-  loop.exec();
-
-  int code = rep->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-  qDebug() << "CODE" << code;
-  //qDebug() << "HEADERS" << rep->rawHeaderPairs();
-
-  // Partial download.
-  bool ok = false;
-  if (code == 206) {
-    ok = true;
-    data.append(rep->readAll());
-  }
-
-  rep->close();
-  return ok;
+  */
 }

@@ -1,6 +1,11 @@
 #include <QObject>
 
 #include "Util.h"
+#include "Range.h"
+
+void Util::registerCustomTypes() {
+  qRegisterMetaType<Range>("Range");
+}
 
 QString Util::getErrorString(QNetworkReply::NetworkError error) {
   switch (error) {

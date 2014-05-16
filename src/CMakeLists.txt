@@ -11,6 +11,9 @@ ADD_EXECUTABLE(
 
   Downloader.h
   Downloader.cpp
+
+  DownloadTask.h
+  DownloadTask.cpp
   )
 
 QT5_USE_MODULES(${NAME} Core Network)

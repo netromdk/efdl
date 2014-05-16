@@ -6,6 +6,7 @@
 
 class Util {
 public:
+  static void registerCustomTypes();
   static QString getErrorString(QNetworkReply::NetworkError error);
 };
 

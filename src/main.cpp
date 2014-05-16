@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 
+#include "Util.h"
 #include "Version.h"
 #include "Downloader.h"
 
@@ -18,6 +19,11 @@ int main(int argc, char **argv) {
   parser.addVersionOption();
   parser.addPositionalArgument("URL", QObject::tr("URL to download."));
 
+  QCommandLineOption connsOpt(QStringList{"c", "connections"},
+                              QObject::tr("Number of simultaneous connections to use. (defaults to 1)"),
+                              QObject::tr("num"));
+  parser.addOption(connsOpt);
+
   // Process CLI arguments.
   parser.process(app);
   const QStringList args = parser.positionalArguments();
@@ -25,21 +31,33 @@ int main(int argc, char **argv) {
     parser.showHelp(-1);
   }
 
+  int conns = 1;
+  if (parser.isSet(connsOpt)) {
+    bool ok;
+    conns = parser.value(connsOpt).toInt(&ok);
+    if (!ok || conns <= 0) {
+      qCritical() << "ERROR Number of connections must be a positive number!";
+      return -1;
+    }
+  }
+
   QUrl url{args[0], QUrl::StrictMode};
   if (!url.isValid()) {
-    qCritical() << "Invalid URL!";
+    qCritical() << "ERROR Invalid URL!";
     return -1;
   }
 
   const QStringList schemes{"http", "https"};
   if (!schemes.contains(url.scheme().toLower())) {
-    qCritical() << "Invalid scheme! Valid ones are:" <<
+    qCritical() << "ERROR Invalid scheme! Valid ones are:" <<
       qPrintable(schemes.join(" "));
     return -1;
   }
 
+  Util::registerCustomTypes();
+
   // Begin transfer in event loop.
-  Downloader dl{url};
+  Downloader dl{url, conns};
   QObject::connect(&dl, &Downloader::finished, &app, &QCoreApplication::quit);
   QTimer::singleShot(0, &dl, SLOT(start()));
 
