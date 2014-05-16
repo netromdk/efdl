@@ -21,6 +21,9 @@ int main(int argc, char **argv) {
   // Process CLI arguments.
   parser.process(app);
   const QStringList args = parser.positionalArguments();
+  if (args.size() != 1) {
+    parser.showHelp(-1);
+  }
 
   QUrl url{args[0], QUrl::StrictMode};
   if (!url.isValid()) {
