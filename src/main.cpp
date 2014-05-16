@@ -19,19 +19,19 @@ int main(int argc, char **argv) {
   parser.addVersionOption();
   parser.addPositionalArgument("URL", QObject::tr("URL to download."));
 
-  QCommandLineOption connsOpt(QStringList{"c", "conns"},
-                              QObject::tr("Number of simultaneous connections to"
-                                          " use. (defaults to 1)"),
-                              QObject::tr("num"));
-  parser.addOption(connsOpt);
+  QCommandLineOption verboseOpt(QStringList{"verbose"},
+                                QObject::tr("Verbose mode."));
+  parser.addOption(verboseOpt);
 
   QCommandLineOption confirmOpt(QStringList{"confirm"},
                                 QObject::tr("Confirm to download on redirections."));
   parser.addOption(confirmOpt);
 
-  QCommandLineOption verboseOpt(QStringList{"verbose"},
-                                QObject::tr("Verbose mode."));
-  parser.addOption(verboseOpt);
+  QCommandLineOption connsOpt(QStringList{"c", "conns"},
+                              QObject::tr("Number of simultaneous connections to"
+                                          " use. (defaults to 1)"),
+                              QObject::tr("num"));
+  parser.addOption(connsOpt);
 
   QCommandLineOption chunksOpt(QStringList{"chunks"},
                                QObject::tr("Number of chunks to split the download"
