@@ -14,7 +14,7 @@ DownloadTask::DownloadTask(const QUrl &url, Range range)
 void DownloadTask::run() {
   qint64 start = range.first, end = range.second;
   QString rangeHdr = QString("bytes=%1-%2").arg(start).arg(end);
-  qDebug() << "RANGE" << qPrintable(rangeHdr);
+  //qDebug() << "RANGE" << qPrintable(rangeHdr);
 
   QNetworkRequest req{url};
   req.setRawHeader("Range", rangeHdr.toUtf8());
@@ -27,7 +27,7 @@ void DownloadTask::run() {
   loop.exec();
 
   int code = rep->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-  qDebug() << "CODE" << code;
+  //qDebug() << "CODE" << code;
   //qDebug() << "HEADERS" << rep->rawHeaderPairs();
 
   // Partial download.

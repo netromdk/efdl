@@ -2,6 +2,7 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QEventLoop>
+#include <QMutexLocker>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QCoreApplication>
@@ -11,7 +12,8 @@
 #include "DownloadTask.h"
 
 Downloader::Downloader(const QUrl &url, int conns)
-  : url{url}, conns{conns}, contentLen{0}, continuable{false}, reply{nullptr}
+  : url{url}, conns{conns}, downloadCount{0}, rangeCount{0}, contentLen{0},
+  continuable{false}, reply{nullptr}
 { }
 
 void Downloader::start() {
@@ -62,8 +64,11 @@ void Downloader::start() {
 }
 
 void Downloader::onDownloadTaskFinished(Range range, QByteArray *data) {
+  QMutexLocker locker{&finishedMutex};
   qDebug() << "finished" << range << data->size();
-  delete data;
+  chunks[range.first] = data;
+  downloadCount++;
+  saveChunk();
 }
 
 void Downloader::onDownloadTaskFailed(Range range, int httpCode,
@@ -137,6 +142,7 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
 
 void Downloader::createRanges() {
   ranges.clear();
+  chunks.clear();
 
   constexpr qint64 chunkSize = 1048576;
   for (qint64 start = 0; start < contentLen; start += chunkSize) {
@@ -145,9 +151,11 @@ void Downloader::createRanges() {
       end = contentLen;
     }
     ranges.enqueue(Range{start, end - 1});
+    chunks[start] = nullptr;
   }
+  rangeCount = ranges.size();
 
-  qDebug() << "CHUNKS" << ranges.size();
+  qDebug() << "CHUNKS" << rangeCount;
 }
 
 void Downloader::setupThreadPool() {
@@ -217,4 +225,27 @@ void Downloader::download() {
   qDebug() << "SUCCESS";
   emit finished();
   */
+}
+
+void Downloader::saveChunk() {
+  // Lock on chunks map is required to be acquired going into this
+  // method!
+
+  if (chunks.isEmpty()) {
+    qDebug() << "no more";
+    return;
+  }
+
+  auto key = chunks.firstKey();
+  const auto *value = chunks[key];
+  if (value != nullptr) {
+    // TODO: save it
+    chunks.remove(key);
+    qDebug() << "saved" << key;
+  }
+
+  // If everything has been downloaded then call method again.
+  if (rangeCount == downloadCount) {
+    saveChunk();
+  }
 }

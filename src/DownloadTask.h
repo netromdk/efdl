@@ -15,13 +15,13 @@ class DownloadTask : public QObject, public QRunnable {
 public:
   DownloadTask(const QUrl &url, Range range);
 
-  void run() override;
-
 signals:
   void finished(Range range, QByteArray *data);
   void failed(Range range, int httpCode, QNetworkReply::NetworkError error);
 
 private:
+  void run() override;
+
   const QUrl &url;
   Range range;
 };

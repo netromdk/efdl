@@ -2,7 +2,9 @@
 #define EFDL_DOWNLOADER_H
 
 #include <QUrl>
+#include <QMap>
 #include <QPair>
+#include <QMutex>
 #include <QQueue>
 #include <QObject>
 #include <QByteArray>
@@ -37,17 +39,21 @@ private:
   void createRanges();
   void setupThreadPool();
   void download();
+  void saveChunk();
   
   QUrl url;
-  int conns;
+  int conns, downloadCount, rangeCount;
   qint64 contentLen;
   bool continuable;
 
   QNetworkAccessManager netmgr;
   QNetworkReply *reply;
 
+  QMutex finishedMutex;
+
   QQueue<Range> ranges;
   QThreadPool pool;
+  QMap<qint64, QByteArray*> chunks; // range start -> data pointer
 };
 
 #endif // EFDL_DOWNLOADER_H
