@@ -26,9 +26,13 @@ int main(int argc, char **argv) {
   parser.addOption(connsOpt);
 
   QCommandLineOption confirmOpt(QStringList{"confirm"},
-                              QObject::tr("Confirm to download on redirections. "
-                                          "(defaults to not asking)"));
+                                QObject::tr("Confirm to download on redirections. "
+                                            "(defaults to not asking)"));
   parser.addOption(confirmOpt);
+
+  QCommandLineOption verboseOpt(QStringList{"verbose"},
+                                QObject::tr("Verbose mode."));
+  parser.addOption(verboseOpt);
 
   // Process CLI arguments.
   parser.process(app);
@@ -48,6 +52,7 @@ int main(int argc, char **argv) {
   }
 
   bool confirm = parser.isSet(confirmOpt);
+  bool verbose = parser.isSet(verboseOpt);
 
   QUrl url{args[0], QUrl::StrictMode};
   if (!url.isValid()) {
@@ -65,7 +70,7 @@ int main(int argc, char **argv) {
   Util::registerCustomTypes();
 
   // Begin transfer in event loop.
-  Downloader dl{url, conns, confirm};
+  Downloader dl{url, conns, confirm, verbose};
   QObject::connect(&dl, &Downloader::finished, &app, &QCoreApplication::quit);
   QTimer::singleShot(0, &dl, SLOT(start()));
 

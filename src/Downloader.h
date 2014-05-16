@@ -22,7 +22,7 @@ class Downloader : public QObject {
   Q_OBJECT
   
 public:
-  Downloader(const QUrl &url, int conns, bool confirm);
+  Downloader(const QUrl &url, int conns, bool confirm, bool verbose);
 
 signals: 
   void finished();
@@ -49,7 +49,7 @@ private:
   QUrl url;
   int conns, downloadCount, rangeCount;
   qint64 contentLen;
-  bool confirm, continuable;
+  bool confirm, verbose, continuable;
 
   QNetworkAccessManager netmgr;
   QNetworkReply *reply;

@@ -11,9 +11,9 @@
 #include "Downloader.h"
 #include "DownloadTask.h"
 
-Downloader::Downloader(const QUrl &url, int conns, bool confirm)
+Downloader::Downloader(const QUrl &url, int conns, bool confirm, bool verbose)
   : url{url}, conns{conns}, downloadCount{0}, rangeCount{0}, contentLen{0},
-  confirm{confirm}, continuable{false}, reply{nullptr}
+  confirm{confirm}, verbose{verbose}, continuable{false}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
@@ -46,7 +46,9 @@ void Downloader::start() {
     QCoreApplication::exit(-1);
     return;    
   }
-  qDebug() << "SIZE" << contentLen;
+  if (verbose) {
+    qDebug() << "SIZE" << contentLen;
+  }
 
   // Check for header "Accept-Ranges" and whether it has "bytes"
   // supported.
@@ -55,8 +57,10 @@ void Downloader::start() {
     const QString ranges = QString::fromUtf8(reply->rawHeader("Accept-Ranges"));
     continuable = ranges.toLower().contains("bytes");
   }
-  qDebug() << qPrintable(QString("%1CONTINUABLE").
-                         arg(continuable ? "" : "NOT "));
+  if (verbose) {
+    qDebug() << qPrintable(QString("%1CONTINUABLE").
+                           arg(continuable ? "" : "NOT "));
+  }
 
   // Clean reply.
   reply->close();
@@ -88,7 +92,9 @@ void Downloader::onCommitThreadFinished() {
 }
 
 QNetworkReply *Downloader::getHead(const QUrl &url) {
-  qDebug() << "HEAD" << qPrintable(url.toString());
+  if (verbose) {
+    qDebug() << "HEAD" << qPrintable(url.toString());
+  }
 
   QNetworkRequest req{url};
   auto *rep = netmgr.head(req);
@@ -103,13 +109,18 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
   }  
 
   int code = rep->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-  qDebug() << "CODE" << code;
-  //qDebug() << "HEADERS" << rep->rawHeaderPairs();
+  if (verbose) {
+    qDebug() << "CODE" << code;
+    //qDebug() << "HEADERS" << rep->rawHeaderPairs();
+  }
 
   static bool didRedir = false;
 
   if (code >= 200 && code < 300) {
-    qDebug() << "Resolved URL:" << qPrintable(url.toString());
+    if (url != this->url) {
+      qDebug() << "Resolved URL:" << qPrintable(url.toString());
+    }
+
     if (confirm && didRedir) {
       if (!Util::askProceed(tr("Do you want to continue?") + " [y/N] ")) {
         rep->abort();
@@ -123,7 +134,7 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
   if (code >= 300 && code < 400) {
     if (!rep->hasRawHeader("Location")) {
       rep->abort();
-      qCritical() << "Could not resolve URL!";
+      qCritical() << "ERROR Could not resolve URL!";
       return nullptr;
     }    
 
@@ -132,7 +143,7 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
     QUrl loc{locHdr, QUrl::StrictMode};
     if (!loc.isValid()) {
       rep->abort();
-      qCritical() << "Invalid redirection header:" <<
+      qCritical() << "ERROR Invalid redirection header:" <<
         qPrintable(loc.toString());
       return nullptr;
     }
@@ -142,7 +153,10 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
       loc = url.resolved(loc);
     }
 
-    qDebug() << "REDIRECT" << qPrintable(loc.toString());
+    if (verbose) {
+      qDebug() << "REDIRECT" << qPrintable(loc.toString());
+    }
+
     didRedir = true;
     rep->abort();
     rep = getHead(loc);
@@ -180,7 +194,9 @@ void Downloader::createRanges() {
   }
   rangeCount = ranges.size();
 
-  qDebug() << "CHUNKS" << rangeCount;
+  if (verbose) {
+    qDebug() << "CHUNKS" << rangeCount;
+  }
 }
 
 void Downloader::setupThreadPool() {
@@ -196,7 +212,9 @@ void Downloader::setupThreadPool() {
 }
 
 void Downloader::download() {
-  qDebug() << "DOWNLOAD" << qPrintable(url.path());
+  if (verbose) {
+    qDebug() << "DOWNLOAD" << qPrintable(url.path());
+  }
 
   QFileInfo fi{url.path()};
   QDir dir{QCoreApplication::instance()->applicationDirPath()};
