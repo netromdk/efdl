@@ -198,10 +198,8 @@ void Downloader::createRanges() {
   }
   else if (conns >= 8) {
     size = contentLen / conns;
-    qint64 onePerc = contentLen / 100;
-    if (size > onePerc) {
-      size = onePerc;
-    }
+    constexpr qint64 MB{10485760}; // 10 MB
+    if (size > MB) size = MB;
   }
 
   if (verbose) {
