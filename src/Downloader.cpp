@@ -110,7 +110,8 @@ void Downloader::onDownloadTaskFailed(int num, Range range, int httpCode,
 }
 
 void Downloader::onCommitThreadFinished() {
-  qDebug(); // Write newline to end the progress line.
+  connProg = false;
+  updateProgress();
   emit finished();
 }
 
@@ -352,11 +353,12 @@ void Downloader::updateProgress() {
     sstream << "Downloading.. Awaiting first chunk";
   }
   else {
+    bool done = (bytesDown == contentLen);
     QDateTime now{QDateTime::currentDateTime()};
     qint64 secs{started.secsTo(now)}, bytesPrSec{0}, secsLeft{0};
     if (secs > 0) {
       bytesPrSec = bytesDown / secs;
-      secsLeft = (contentLen - bytesDown) / bytesPrSec;
+      secsLeft = (!done ? (contentLen - bytesDown) / bytesPrSec : secs);
     }
 
     float perc = float(downloadCount) / float(rangeCount) * 100.0;
@@ -365,7 +367,8 @@ void Downloader::updateProgress() {
             << Util::formatSize(bytesDown, 1).toStdString() << " / "
             << Util::formatSize(contentLen, 1).toStdString() << " @ "
             << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
-            << Util::formatTime(secsLeft).toStdString() << " left | "
+            << Util::formatTime(secsLeft).toStdString() << " "
+            << (!done ? "left" : "total") << " | "
             << "chunk " << downloadCount << " / " << rangeCount;
   }
 
