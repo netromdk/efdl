@@ -1,3 +1,4 @@
+#include <sstream>
 #include <iostream>
 
 #include <QDir>
@@ -295,11 +296,11 @@ void Downloader::updateProgress() {
   // method!
 
   using namespace std;
-  cout << "\r" // Rewind to beginning with carriage return.
-       << "[ ";
+  stringstream sstream;
+  sstream << "[ ";
 
   if (bytesDown == 0) {
-    cout << "Downloading.. Awaiting first chunk";
+    sstream << "Downloading.. Awaiting first chunk";
   }
   else {
     QDateTime now{QDateTime::currentDateTime()};
@@ -312,17 +313,28 @@ void Downloader::updateProgress() {
     float perc = float(downloadCount) / float(rangeCount) * 100.0;
 
     // Set fixed float formatting to one decimal digit.
-    cout.precision(1);
-    cout.setf(ios::fixed, ios::floatfield);
+    sstream.precision(1);
+    sstream.setf(ios::fixed, ios::floatfield);
 
-    cout << perc << "% | "
-         << Util::formatSize(bytesDown, 1).toStdString() << " / "
-         << Util::formatSize(contentLen, 1).toStdString() << " @ "
-         << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
-         << Util::formatTime(secsLeft).toStdString() << " left | "
-         << "chunk " << downloadCount << " / " << rangeCount;
+    sstream << perc << "% | "
+            << Util::formatSize(bytesDown, 1).toStdString() << " / "
+            << Util::formatSize(contentLen, 1).toStdString() << " @ "
+            << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
+            << Util::formatTime(secsLeft).toStdString() << " left | "
+            << "chunk " << downloadCount << " / " << rangeCount;
   }
 
-  cout << " ]";
+  sstream << " ]";
+
+  static int maxLen{0};
+  string msg{sstream.str()};
+
+  // Rewind to beginning with carriage return and fill with blanks to
+  // remove leftovers. Then rewind again and write actual message.
+  cout << '\r' << string(maxLen, ' ') << '\r' << msg;
   cout.flush();
+
+  if (msg.size() > maxLen) {
+    maxLen = msg.size();
+  }
 }
