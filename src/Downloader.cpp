@@ -196,8 +196,12 @@ void Downloader::createRanges() {
   else if (chunks != -1) {
     size = contentLen / chunks;
   }
-  else if (conns > 4) {
+  else if (conns >= 8) {
     size = contentLen / conns;
+    qint64 onePerc = contentLen / 100;
+    if (size > onePerc) {
+      size = onePerc;
+    }
   }
 
   if (verbose) {
