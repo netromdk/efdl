@@ -300,8 +300,10 @@ void Downloader::updateProgress() {
   // method!
 
   QDateTime now{QDateTime::currentDateTime()};
-  qint64 secs = started.secsTo(now),
+  qint64 secs{started.secsTo(now)}, bytesPrSec{0};
+  if (bytesDown > 0 && secs > 0) {
     bytesPrSec = bytesDown / secs;
+  }
 
   float perc = float(downloadCount) / float(rangeCount) * 100.0;
 
