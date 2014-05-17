@@ -5,10 +5,14 @@
 
 #include "DownloadTask.h"
 
-DownloadTask::DownloadTask(const QUrl &url, Range range)
-  : url{url}, range{range}
+DownloadTask::DownloadTask(const QUrl &url, Range range, int num)
+  : url{url}, range{range}, num{num}
 {
   setAutoDelete(true);
+}
+
+void DownloadTask::onProgress(qint64 received, qint64 total) {
+  emit progress(num, received, total);
 }
 
 void DownloadTask::run() {
@@ -21,6 +25,10 @@ void DownloadTask::run() {
 
   QNetworkAccessManager netmgr;
   auto *rep = netmgr.get(req);
+  emit started(num);
+
+  connect(rep, &QNetworkReply::downloadProgress,
+          this, &DownloadTask::onProgress);
   
   QEventLoop loop;
   QObject::connect(rep, &QNetworkReply::finished, &loop, &QEventLoop::quit);
@@ -43,9 +51,9 @@ void DownloadTask::run() {
   rep->close();
 
   if (ok) {
-    emit finished(range, dataPtr);
+    emit finished(num, range, dataPtr);
   }
   else {
-    emit failed(range, code, error);
+    emit failed(num, range, code, error);
   }
 }

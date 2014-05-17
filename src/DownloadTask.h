@@ -13,17 +13,24 @@ class DownloadTask : public QObject, public QRunnable {
   Q_OBJECT
 
 public:
-  DownloadTask(const QUrl &url, Range range);
+  DownloadTask(const QUrl &url, Range range, int num);
 
 signals:
-  void finished(Range range, QByteArray *data);
-  void failed(Range range, int httpCode, QNetworkReply::NetworkError error);
+  void started(int num);
+  void progress(int num, qint64 received, qint64 total);
+  void finished(int num, Range range, QByteArray *data);
+  void failed(int num, Range range, int httpCode,
+              QNetworkReply::NetworkError error);
+
+private slots:
+  void onProgress(qint64 received, qint64 total);
 
 private:
   void run() override;
 
   const QUrl &url;
   Range range;
+  int num;
 };
 
 #endif // EFDL_DOWNLOAD_TASK_H

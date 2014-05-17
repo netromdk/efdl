@@ -15,11 +15,12 @@
 #include "DownloadTask.h"
 
 Downloader::Downloader(const QUrl &url, const QString &outputDir, int conns,
-                       int chunks, int chunkSize, bool confirm, bool verbose)
+                       int chunks, int chunkSize, bool confirm, bool connProg,
+                       bool verbose)
   : url{url}, outputDir{outputDir}, conns{conns}, chunks{chunks},
   chunkSize{chunkSize}, downloadCount{0}, rangeCount{0}, contentLen{0},
-  bytesDown{0}, confirm{confirm}, verbose{verbose}, continuable{false},
-  reply{nullptr}
+  bytesDown{0}, confirm{confirm}, connProg{connProg}, verbose{verbose},
+  continuable{false}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
@@ -79,7 +80,25 @@ void Downloader::start() {
   download();
 }
 
-void Downloader::onDownloadTaskFinished(Range range, QByteArray *data) {
+void Downloader::onDownloadTaskStarted(int num) {
+  QMutexLocker locker{&finishedMutex};
+  connsMap[num] = Range{0, 0};
+  if (connsMap.size() > conns) {
+    connsMap.remove(connsMap.firstKey());
+  }
+  updateProgress();
+}
+
+void Downloader::onDownloadTaskProgress(int num, qint64 received, qint64 total) {
+  QMutexLocker locker{&finishedMutex};
+  connsMap[num] = Range{received, total};
+  if (connsMap.size() > conns) {
+    connsMap.remove(connsMap.firstKey());
+  }
+  updateProgress();
+}
+
+void Downloader::onDownloadTaskFinished(int num, Range range, QByteArray *data) {
   QMutexLocker locker{&finishedMutex};
   chunksMap[range.first] = data;
   downloadCount++;
@@ -88,7 +107,7 @@ void Downloader::onDownloadTaskFinished(Range range, QByteArray *data) {
   saveChunk();
 }
 
-void Downloader::onDownloadTaskFailed(Range range, int httpCode,
+void Downloader::onDownloadTaskFailed(int num, Range range, int httpCode,
                                       QNetworkReply::NetworkError error) {
   qDebug() << "failed" << range << Util::getErrorString(error);
 }
@@ -255,13 +274,18 @@ void Downloader::download() {
   // Fill queue with tasks and start immediately.
   started = QDateTime::currentDateTime();
   updateProgress();
+  int num{1};
   while (!ranges.empty()) {
     auto range = ranges.dequeue();
-    auto *task = new DownloadTask{url, range};
+    auto *task = new DownloadTask{url, range, ++num};
+    connect(task, &DownloadTask::started,
+            this, &Downloader::onDownloadTaskStarted);
+    connect(task, &DownloadTask::progress,
+            this, &Downloader::onDownloadTaskProgress);
     connect(task, &DownloadTask::finished,
             this, &Downloader::onDownloadTaskFinished);
     connect(task, &DownloadTask::failed,
-            this,  &Downloader::onDownloadTaskFailed);
+            this, &Downloader::onDownloadTaskFailed);
     pool.start(task);
   }
 }
@@ -297,6 +321,11 @@ void Downloader::updateProgress() {
 
   using namespace std;
   stringstream sstream;
+
+  // Set fixed float formatting to one decimal digit.
+  sstream.precision(1);
+  sstream.setf(ios::fixed, ios::floatfield);
+
   sstream << "[ ";
 
   if (bytesDown == 0) {
@@ -312,10 +341,6 @@ void Downloader::updateProgress() {
 
     float perc = float(downloadCount) / float(rangeCount) * 100.0;
 
-    // Set fixed float formatting to one decimal digit.
-    sstream.precision(1);
-    sstream.setf(ios::fixed, ios::floatfield);
-
     sstream << perc << "% | "
             << Util::formatSize(bytesDown, 1).toStdString() << " / "
             << Util::formatSize(contentLen, 1).toStdString() << " @ "
@@ -326,12 +351,28 @@ void Downloader::updateProgress() {
 
   sstream << " ]";
 
+  if (connProg) {
+    foreach (const int &num, connsMap.keys()) {
+      const auto &value = connsMap[num];
+      qint64 received = value.first, total = value.second;
+      float perc{0};
+      if (received > 0 && total > 0) {
+        perc = (long double) received / (long double) total * 100.0;
+      }
+      sstream << "\n{ chunk #" << num << ": "
+              << perc << "% | "
+              << Util::formatSize(received, 1).toStdString() << " / "
+              << Util::formatSize(total, 1).toStdString() << " "
+              << "}";
+    }
+  }
+
   static int maxLen{0}, lastLines{0};
   string msg{sstream.str()};
 
   // Remove additional lines, if any.
   for (int i = 0; i < lastLines; i++) {
-    cout << "\033[A" // Go up a line.
+    cout << "\033[A" // Go up a line (\033 = ESC, [ = CTRL).
          << "\033[2K"; // Clear line.
   }
 

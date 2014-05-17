@@ -47,10 +47,16 @@ int main(int argc, char **argv) {
   parser.addOption(chunksOpt);
 
   QCommandLineOption chunkSizeOpt(QStringList{"chunk-size"},
-                               QObject::tr("Size of each chunk which dictates "
-                                           "how many to use. Cannot be used with --chunks."),
-                               QObject::tr("bytes"));
+                                  QObject::tr("Size of each chunk which dictates "
+                                              "how many to use. Cannot be used "
+                                              "with --chunks."),
+                                  QObject::tr("bytes"));
   parser.addOption(chunkSizeOpt);
+
+  QCommandLineOption connProgOpt(QStringList{"show-conn-progress"},
+                                 QObject::tr("Shows progress information for each "
+                                             "connection."));
+  parser.addOption(connProgOpt);
 
   // Process CLI arguments.
   parser.process(app);
@@ -61,7 +67,8 @@ int main(int argc, char **argv) {
 
   int conns{1}, chunks{-1}, chunkSize{-1};
   bool ok{false}, confirm{parser.isSet(confirmOpt)},
-    verbose{parser.isSet(verboseOpt)};
+    verbose{parser.isSet(verboseOpt)},
+    connProg{parser.isSet(connProgOpt)};
   QString dir;
 
   if (parser.isSet(outputOpt)) {
@@ -117,7 +124,7 @@ int main(int argc, char **argv) {
   Util::registerCustomTypes();
 
   // Begin transfer in event loop.
-  Downloader dl{url, dir, conns, chunks, chunkSize, confirm, verbose};
+  Downloader dl{url, dir, conns, chunks, chunkSize, confirm, connProg, verbose};
   QObject::connect(&dl, &Downloader::finished, &app, &QCoreApplication::quit);
   QTimer::singleShot(0, &dl, SLOT(start()));
 

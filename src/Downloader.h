@@ -24,7 +24,7 @@ class Downloader : public QObject {
   
 public:
   Downloader(const QUrl &url, const QString &outputDir, int conns, int chunks,
-             int chunkSize, bool confirm, bool verbose);
+             int chunkSize, bool confirm, bool connProg, bool verbose);
 
 signals: 
   void finished();
@@ -36,8 +36,10 @@ public slots:
   void start();
 
 private slots:
-  void onDownloadTaskFinished(Range range, QByteArray *data);
-  void onDownloadTaskFailed(Range range, int httpCode,
+  void onDownloadTaskStarted(int num);
+  void onDownloadTaskProgress(int num, qint64 received, qint64 total);
+  void onDownloadTaskFinished(int num, Range range, QByteArray *data);
+  void onDownloadTaskFailed(int num, Range range, int httpCode,
                             QNetworkReply::NetworkError error);
   void onCommitThreadFinished();
   
@@ -53,7 +55,7 @@ private:
   QString outputDir;
   int conns, chunks, chunkSize, downloadCount, rangeCount;
   qint64 contentLen, bytesDown;
-  bool confirm, verbose, continuable;
+  bool confirm, connProg, verbose, continuable;
   QDateTime started;
 
   QNetworkAccessManager netmgr;
@@ -64,6 +66,7 @@ private:
   QQueue<Range> ranges;
   QThreadPool pool;
   QMap<qint64, QByteArray*> chunksMap; // range start -> data pointer
+  QMap<int, Range> connsMap; // num -> download progress
   CommitThread commitThread;
 };
 
