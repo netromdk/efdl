@@ -46,11 +46,12 @@ private:
   void setupThreadPool();
   void download();
   void saveChunk();
+  void updateProgress();
   
   QUrl url;
   QString outputDir;
   int conns, chunks, chunkSize, downloadCount, rangeCount;
-  qint64 contentLen;
+  qint64 contentLen, bytesDown;
   bool confirm, verbose, continuable;
 
   QNetworkAccessManager netmgr;

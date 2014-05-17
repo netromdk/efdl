@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <QDir>
 #include <QDebug>
 #include <QFileInfo>
@@ -15,7 +17,8 @@ Downloader::Downloader(const QUrl &url, const QString &outputDir, int conns,
                        int chunks, int chunkSize, bool confirm, bool verbose)
   : url{url}, outputDir{outputDir}, conns{conns}, chunks{chunks},
   chunkSize{chunkSize}, downloadCount{0}, rangeCount{0}, contentLen{0},
-  confirm{confirm}, verbose{verbose}, continuable{false}, reply{nullptr}
+  bytesDown{0}, confirm{confirm}, verbose{verbose}, continuable{false},
+  reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
@@ -79,7 +82,8 @@ void Downloader::onDownloadTaskFinished(Range range, QByteArray *data) {
   QMutexLocker locker{&finishedMutex};
   chunksMap[range.first] = data;
   downloadCount++;
-  qDebug() << "DL" << float(downloadCount) / float(rangeCount) * 100.0 << "%";
+  bytesDown += data->size();
+  updateProgress();
   saveChunk();
 }
 
@@ -89,7 +93,7 @@ void Downloader::onDownloadTaskFailed(Range range, int httpCode,
 }
 
 void Downloader::onCommitThreadFinished() {
-  qDebug() << "SUCCESS";
+  qDebug(); // Write newline to end the progress line.
   emit finished();
 }
 
@@ -284,4 +288,22 @@ void Downloader::saveChunk() {
   if (rangeCount == downloadCount) {
     saveChunk();
   }
+}
+
+void Downloader::updateProgress() {
+  // Lock on chunks map is required to be acquired going into this
+  // method!
+
+  using namespace std;
+  float perc = float(downloadCount) / float(rangeCount) * 100.0;
+
+  // Set fixed float formatting to two decimal digits.
+  cout.precision(2);
+  cout.setf(ios::fixed, ios::floatfield);
+
+  cout << "\r" // Rewind to beginning with carriage return.
+       << perc << "% -- "
+       << bytesDown << " of " << contentLen << " -- "
+       << "chunk " << downloadCount << " of " << rangeCount;
+  cout.flush();
 }
