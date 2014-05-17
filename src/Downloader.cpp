@@ -236,11 +236,7 @@ void Downloader::setupThreadPool() {
 void Downloader::download() {
   QFileInfo fi{url.path()};
   QDir dir = (outputDir.isEmpty() ? QDir::current() : outputDir);
-  QString path{dir.absoluteFilePath(fi.baseName())};
-  QString suf{fi.suffix()};
-  if (!suf.isEmpty()) {
-    path.append("." + fi.suffix());
-  }
+  QString path{dir.absoluteFilePath(fi.fileName())};
   qDebug() << "Saving to" << qPrintable(path);
 
   auto *file = new QFile{path};
@@ -308,7 +304,7 @@ void Downloader::updateProgress() {
   else {
     QDateTime now{QDateTime::currentDateTime()};
     qint64 secs{started.secsTo(now)}, bytesPrSec{0};
-    if (bytesDown > 0 && secs > 0) {
+    if (secs > 0) {
       bytesPrSec = bytesDown / secs;
     }
 
