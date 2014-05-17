@@ -419,11 +419,12 @@ void Downloader::updateProgress() {
       if (received > 0 && total > 0) {
         perc = (long double) received / (long double) total * 100.0;
       }
-      sstream << "\n{ chunk #" << num << ": "
-              << perc << "% | "
-              << Util::formatSize(received, 1).toStdString() << " / "
-              << Util::formatSize(total, 1).toStdString() << " "
-              << "}";
+      sstream << "\n{ chunk #" << num << ": " << perc << "% ";
+      if (total > 0) {
+        sstream << "| " << Util::formatSize(received, 1).toStdString() << " / "
+                << Util::formatSize(total, 1).toStdString() << " ";
+      }
+      sstream << "}";
     }
   }
 
