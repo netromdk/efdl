@@ -7,6 +7,7 @@
 #include <QMutex>
 #include <QQueue>
 #include <QObject>
+#include <QDateTime>
 #include <QByteArray>
 #include <QThreadPool>
 #include <QNetworkReply>
@@ -53,6 +54,7 @@ private:
   int conns, chunks, chunkSize, downloadCount, rangeCount;
   qint64 contentLen, bytesDown;
   bool confirm, verbose, continuable;
+  QDateTime started;
 
   QNetworkAccessManager netmgr;
   QNetworkReply *reply;

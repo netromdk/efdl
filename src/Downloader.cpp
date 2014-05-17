@@ -254,6 +254,7 @@ void Downloader::download() {
   commitThread.setFile(file);
 
   // Fill queue with tasks and start immediately.
+  started = QDateTime::currentDateTime();
   while (!ranges.empty()) {
     auto range = ranges.dequeue();
     auto *task = new DownloadTask{url, range};
@@ -294,17 +295,22 @@ void Downloader::updateProgress() {
   // Lock on chunks map is required to be acquired going into this
   // method!
 
-  using namespace std;
+  QDateTime now{QDateTime::currentDateTime()};
+  qint64 secs = started.secsTo(now),
+    bytesPrSec = bytesDown / secs;
+
   float perc = float(downloadCount) / float(rangeCount) * 100.0;
 
   // Set fixed float formatting to two decimal digits.
+  using namespace std;
   cout.precision(2);
   cout.setf(ios::fixed, ios::floatfield);
 
   cout << "\r" // Rewind to beginning with carriage return.
        << "[ " << perc << "% | "
        << Util::sizeToString(bytesDown).toStdString() << " / "
-       << Util::sizeToString(contentLen).toStdString() << " | "
+       << Util::sizeToString(contentLen).toStdString() << " @ "
+       << Util::sizeToString(bytesPrSec).toStdString() << "/s | "
        << "chunk " << downloadCount << " / " << rangeCount << " ]";
   cout.flush();
 }
