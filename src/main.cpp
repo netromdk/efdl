@@ -1,4 +1,5 @@
 #include <QUrl>
+#include <QDir>
 #include <QDebug>
 #include <QTimer>
 #include <QCoreApplication>
@@ -27,6 +28,12 @@ int main(int argc, char **argv) {
                                 QObject::tr("Confirm to download on redirections."));
   parser.addOption(confirmOpt);
 
+  QCommandLineOption outputOpt(QStringList{"o", "output"},
+                              QObject::tr("Where to save file. (defaults to "
+                                          "current directory)"),
+                              QObject::tr("dir"));
+  parser.addOption(outputOpt);
+
   QCommandLineOption connsOpt(QStringList{"c", "conns"},
                               QObject::tr("Number of simultaneous connections to"
                                           " use. (defaults to 1)"),
@@ -53,10 +60,18 @@ int main(int argc, char **argv) {
   }
 
   int conns = 1, chunks = -1, chunkSize = -1;
-  bool confirm = parser.isSet(confirmOpt),
+  bool ok, confirm = parser.isSet(confirmOpt),
     verbose = parser.isSet(verboseOpt);
+  QString dir;
 
-  bool ok;
+  if (parser.isSet(outputOpt)) {
+    dir = parser.value(outputOpt);
+    if (!QDir().exists(dir)) {
+      qCritical() << "ERROR Output directory does not exist:" << dir;
+      return -1;
+    }
+  }
+
   if (parser.isSet(connsOpt)) {
     conns = parser.value(connsOpt).toInt(&ok);
     if (!ok || conns <= 0) {
@@ -102,7 +117,7 @@ int main(int argc, char **argv) {
   Util::registerCustomTypes();
 
   // Begin transfer in event loop.
-  Downloader dl{url, conns, chunks, chunkSize, confirm, verbose};
+  Downloader dl{url, dir, conns, chunks, chunkSize, confirm, verbose};
   QObject::connect(&dl, &Downloader::finished, &app, &QCoreApplication::quit);
   QTimer::singleShot(0, &dl, SLOT(start()));
 

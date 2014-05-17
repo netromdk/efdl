@@ -22,8 +22,8 @@ class Downloader : public QObject {
   Q_OBJECT
   
 public:
-  Downloader(const QUrl &url, int conns, int chunks, int chunkSize, bool confirm,
-             bool verbose);
+  Downloader(const QUrl &url, const QString &outputDir, int conns, int chunks,
+             int chunkSize, bool confirm, bool verbose);
 
 signals: 
   void finished();
@@ -48,6 +48,7 @@ private:
   void saveChunk();
   
   QUrl url;
+  QString outputDir;
   int conns, chunks, chunkSize, downloadCount, rangeCount;
   qint64 contentLen;
   bool confirm, verbose, continuable;

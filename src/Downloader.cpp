@@ -11,11 +11,11 @@
 #include "Downloader.h"
 #include "DownloadTask.h"
 
-Downloader::Downloader(const QUrl &url, int conns, int chunks, int chunkSize,
-                       bool confirm, bool verbose)
-  : url{url}, conns{conns}, chunks{chunks}, chunkSize{chunkSize},
-  downloadCount{0}, rangeCount{0}, contentLen{0}, confirm{confirm},
-  verbose{verbose}, continuable{false}, reply{nullptr}
+Downloader::Downloader(const QUrl &url, const QString &outputDir, int conns,
+                       int chunks, int chunkSize, bool confirm, bool verbose)
+  : url{url}, outputDir{outputDir}, conns{conns}, chunks{chunks},
+  chunkSize{chunkSize}, downloadCount{0}, rangeCount{0}, contentLen{0},
+  confirm{confirm}, verbose{verbose}, continuable{false}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
@@ -228,18 +228,14 @@ void Downloader::setupThreadPool() {
 }
 
 void Downloader::download() {
-  if (verbose) {
-    qDebug() << "DOWNLOAD" << qPrintable(url.path());
-  }
-
   QFileInfo fi{url.path()};
-  QDir dir = QDir::current();
+  QDir dir = (outputDir.isEmpty() ? QDir::current() : outputDir);
   QString path{dir.absoluteFilePath(fi.baseName())};
   QString suf{fi.suffix()};
   if (!suf.isEmpty()) {
     path.append("." + fi.suffix());
   }
-  qDebug() << "FILE" << qPrintable(path);
+  qDebug() << "Saving to" << qPrintable(path);
 
   auto *file = new QFile{path};
   if (file->exists()) {
