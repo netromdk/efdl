@@ -20,7 +20,7 @@ Downloader::Downloader(const QUrl &url, const QString &outputDir, int conns,
   : url{url}, outputDir{outputDir}, conns{conns}, chunks{chunks},
   chunkSize{chunkSize}, downloadCount{0}, rangeCount{0}, contentLen{0},
   offset{0}, bytesDown{0}, confirm{confirm}, resume{resume}, connProg{connProg},
-  verbose{verbose}, continuable{false}, reply{nullptr}
+  verbose{verbose}, resumable{false}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
@@ -59,17 +59,17 @@ void Downloader::start() {
 
   // Check for header "Accept-Ranges" and whether it has "bytes"
   // supported.
-  continuable = false;
+  resumable = false;
   if (reply->hasRawHeader("Accept-Ranges")) {
     const QString ranges = QString::fromUtf8(reply->rawHeader("Accept-Ranges"));
-    continuable = ranges.toLower().contains("bytes");
+    resumable = ranges.toLower().contains("bytes");
   }
   if (verbose) {
-    qDebug() << qPrintable(QString("%1CONTINUABLE").
-                           arg(continuable ? "" : "NOT "));
+    qDebug() << qPrintable(QString("%1RESUMABLE").
+                           arg(resumable ? "" : "NOT "));
   }
 
-  if (!continuable && resume) {
+  if (!resumable && resume) {
     qCritical() << "ERROR Cannot resume because server doesn't support it!";
     QCoreApplication::exit(-1);
     return;

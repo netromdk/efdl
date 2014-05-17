@@ -58,7 +58,7 @@ private:
   QString outputDir;
   int conns, chunks, chunkSize, downloadCount, rangeCount;
   qint64 contentLen, offset, bytesDown;
-  bool confirm, resume, connProg, verbose, continuable;
+  bool confirm, resume, connProg, verbose, resumable;
   QDateTime started;
 
   QNetworkAccessManager netmgr;
