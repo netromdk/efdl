@@ -259,6 +259,7 @@ void Downloader::download() {
 
   // Fill queue with tasks and start immediately.
   started = QDateTime::currentDateTime();
+  updateProgress();
   while (!ranges.empty()) {
     auto range = ranges.dequeue();
     auto *task = new DownloadTask{url, range};
