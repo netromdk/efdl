@@ -15,12 +15,12 @@
 #include "DownloadTask.h"
 
 Downloader::Downloader(const QUrl &url, const QString &outputDir, int conns,
-                       int chunks, int chunkSize, bool confirm, bool connProg,
-                       bool verbose)
+                       int chunks, int chunkSize, bool confirm, bool resume,
+                       bool connProg, bool verbose)
   : url{url}, outputDir{outputDir}, conns{conns}, chunks{chunks},
   chunkSize{chunkSize}, downloadCount{0}, rangeCount{0}, contentLen{0},
-  bytesDown{0}, confirm{confirm}, connProg{connProg}, verbose{verbose},
-  continuable{false}, reply{nullptr}
+  offset{0}, bytesDown{0}, confirm{confirm}, resume{resume}, connProg{connProg},
+  verbose{verbose}, continuable{false}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
@@ -69,10 +69,17 @@ void Downloader::start() {
                            arg(continuable ? "" : "NOT "));
   }
 
+  if (!continuable && resume) {
+    qCritical() << "ERROR Cannot resume because server doesn't support it!";
+    QCoreApplication::exit(-1);
+    return;
+  }
+
   // Clean reply.
   reply->close();
   reply = nullptr;
 
+  setupFile();
   createRanges();
   setupThreadPool();
 
@@ -203,6 +210,52 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
   return rep;
 }
 
+void Downloader::setupFile() {
+  QFileInfo fi{url.path()};
+  QDir dir = (outputDir.isEmpty() ? QDir::current() : outputDir);
+  QString path{dir.absoluteFilePath(fi.fileName())};
+  qDebug() << "Saving to" << qPrintable(path);
+
+  auto *file = new QFile{path};
+  if (file->exists() && !resume) {
+    if (!QFile::remove(path)) {
+      qCritical() << "ERROR Could not truncate output file!";
+      delete file;
+      QCoreApplication::exit(-1);
+      return;
+    }
+  }
+
+  if (resume) {
+    if (file->size() >= contentLen) {
+      qCritical() << "Cannot resume download. Continuing normally by truncating file.";
+      resume = false;
+    }
+    else {
+      offset = file->size();
+      if (verbose) {
+        qDebug() << "OFFSET" << offset;
+      }
+    }
+  }
+
+  QIODevice::OpenMode openMode{QIODevice::WriteOnly};
+  if (resume) {
+    openMode |= QIODevice::Append;
+  }
+  else {
+    openMode |= QIODevice::Truncate;
+  }
+
+  if (!file->open(openMode)) {
+    qCritical() << "ERROR Could not open file for writing!";
+    delete file;
+    QCoreApplication::exit(-1);
+    return;
+  }
+  commitThread.setFile(file);
+}
+
 void Downloader::createRanges() {
   ranges.clear();
   chunksMap.clear();
@@ -212,10 +265,10 @@ void Downloader::createRanges() {
     size = chunkSize;
   }
   else if (chunks != -1) {
-    size = contentLen / chunks;
+    size = (contentLen - offset) / chunks;
   }
   else if (conns >= 8) {
-    size = contentLen / conns;
+    size = (contentLen - offset) / conns;
     constexpr qint64 MB{10485760}; // 10 MB
     if (size > MB) size = MB;
   }
@@ -224,7 +277,7 @@ void Downloader::createRanges() {
     qDebug() << "CHUNK SIZE" << size;
   }
 
-  for (qint64 start = 0; start < contentLen; start += size) {
+  for (qint64 start = offset; start < contentLen; start += size) {
     qint64 end = start + size;
     if (end >= contentLen) {
       end = contentLen;
@@ -252,30 +305,13 @@ void Downloader::setupThreadPool() {
 }
 
 void Downloader::download() {
-  QFileInfo fi{url.path()};
-  QDir dir = (outputDir.isEmpty() ? QDir::current() : outputDir);
-  QString path{dir.absoluteFilePath(fi.fileName())};
-  qDebug() << "Saving to" << qPrintable(path);
-
-  auto *file = new QFile{path};
-  if (file->exists()) {
-    QFile::remove(path);
-  }
-  if (!file->open(QIODevice::WriteOnly)) {
-    qCritical() << "ERROR Could not open file for writing!";
-    delete file;
-    QCoreApplication::exit(-1);
-    return;
-  }
-  commitThread.setFile(file);
-
   // Fill queue with tasks and start immediately.
   started = QDateTime::currentDateTime();
   updateProgress();
   int num{1};
   while (!ranges.empty()) {
     auto range = ranges.dequeue();
-    auto *task = new DownloadTask{url, range, ++num};
+    auto *task = new DownloadTask{url, range, num++};
     connect(task, &DownloadTask::started,
             this, &Downloader::onDownloadTaskStarted);
     connect(task, &DownloadTask::progress,
@@ -353,18 +389,19 @@ void Downloader::updateProgress() {
     sstream << "Downloading.. Awaiting first chunk";
   }
   else {
-    bool done = (bytesDown == contentLen);
+    bool done = (bytesDown + offset == contentLen);
     QDateTime now{QDateTime::currentDateTime()};
     qint64 secs{started.secsTo(now)}, bytesPrSec{0}, secsLeft{0};
     if (secs > 0) {
       bytesPrSec = bytesDown / secs;
-      secsLeft = (!done ? (contentLen - bytesDown) / bytesPrSec : secs);
+      secsLeft = (!done ? (contentLen - bytesDown - offset) / bytesPrSec
+                  : secs);
     }
 
     float perc = float(downloadCount) / float(rangeCount) * 100.0;
 
     sstream << perc << "% | "
-            << Util::formatSize(bytesDown, 1).toStdString() << " / "
+            << Util::formatSize(bytesDown + offset, 1).toStdString() << " / "
             << Util::formatSize(contentLen, 1).toStdString() << " @ "
             << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
             << Util::formatTime(secsLeft).toStdString() << " "

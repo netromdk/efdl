@@ -24,7 +24,8 @@ class Downloader : public QObject {
   
 public:
   Downloader(const QUrl &url, const QString &outputDir, int conns, int chunks,
-             int chunkSize, bool confirm, bool connProg, bool verbose);
+             int chunkSize, bool confirm, bool resume, bool connProg,
+             bool verbose);
 
 signals: 
   void finished();
@@ -45,6 +46,7 @@ private slots:
   
 private:
   QNetworkReply *getHead(const QUrl &url);
+  void setupFile();
   void createRanges();
   void setupThreadPool();
   void download();
@@ -55,8 +57,8 @@ private:
   QUrl url;
   QString outputDir;
   int conns, chunks, chunkSize, downloadCount, rangeCount;
-  qint64 contentLen, bytesDown;
-  bool confirm, connProg, verbose, continuable;
+  qint64 contentLen, offset, bytesDown;
+  bool confirm, resume, connProg, verbose, continuable;
   QDateTime started;
 
   QNetworkAccessManager netmgr;

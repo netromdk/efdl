@@ -28,6 +28,11 @@ int main(int argc, char **argv) {
                                 QObject::tr("Confirm to download on redirections."));
   parser.addOption(confirmOpt);
 
+  QCommandLineOption resumeOpt(QStringList{"r", "resume"},
+                                QObject::tr("Resume download if file is present "
+                                            "locally and the server supports it."));
+  parser.addOption(resumeOpt);
+
   QCommandLineOption outputOpt(QStringList{"o", "output"},
                               QObject::tr("Where to save file. (defaults to "
                                           "current directory)"),
@@ -68,6 +73,7 @@ int main(int argc, char **argv) {
   int conns{1}, chunks{-1}, chunkSize{-1};
   bool ok{false}, confirm{parser.isSet(confirmOpt)},
     verbose{parser.isSet(verboseOpt)},
+    resume{parser.isSet(resumeOpt)},
     connProg{parser.isSet(connProgOpt)};
   QString dir;
 
@@ -124,7 +130,8 @@ int main(int argc, char **argv) {
   Util::registerCustomTypes();
 
   // Begin transfer in event loop.
-  Downloader dl{url, dir, conns, chunks, chunkSize, confirm, connProg, verbose};
+  Downloader dl{url, dir, conns, chunks, chunkSize, confirm, resume, connProg,
+                verbose};
   QObject::connect(&dl, &Downloader::finished, &app, &QCoreApplication::quit);
   QTimer::singleShot(0, &dl, SLOT(start()));
 
