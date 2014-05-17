@@ -302,9 +302,9 @@ void Downloader::updateProgress() {
   cout.setf(ios::fixed, ios::floatfield);
 
   cout << "\r" // Rewind to beginning with carriage return.
-       << perc << "% -- "
-       << Util::sizeToString(bytesDown).toStdString() << " of "
-       << Util::sizeToString(contentLen).toStdString() << " -- "
-       << "chunk " << downloadCount << " of " << rangeCount;
+       << "[ " << perc << "% | "
+       << Util::sizeToString(bytesDown).toStdString() << " / "
+       << Util::sizeToString(contentLen).toStdString() << " | "
+       << "chunk " << downloadCount << " / " << rangeCount << " ]";
   cout.flush();
 }
