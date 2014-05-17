@@ -154,3 +154,44 @@ QString Util::formatTime(qint64 secs) {
   }
   return res;
 }
+
+bool Util::stringToHashAlg(QString str, QCryptographicHash::Algorithm &alg) {
+  str = str.trimmed().toLower();
+  if (str == "md4") {
+    alg = QCryptographicHash::Md4;
+  }
+  else if (str == "md5") {
+    alg = QCryptographicHash::Md5;
+  }
+  else if (str == "sha1") {
+    alg = QCryptographicHash::Sha1;
+  }
+  else if (str == "sha2-224") {
+    alg = QCryptographicHash::Sha224;
+  }
+  else if (str == "sha2-256") {
+    alg = QCryptographicHash::Sha256;
+  }
+  else if (str == "sha2-384") {
+    alg = QCryptographicHash::Sha384;
+  }
+  else if (str == "sha2-512") {
+    alg = QCryptographicHash::Sha512;
+  }
+  else if (str == "sha3-224") {
+    alg = QCryptographicHash::Sha3_224;
+  }
+  else if (str == "sha3-256") {
+    alg = QCryptographicHash::Sha3_256;
+  }
+  else if (str == "sha3-384") {
+    alg = QCryptographicHash::Sha3_384;
+  }
+  else if (str == "sha3-512") {
+    alg = QCryptographicHash::Sha3_512;
+  }
+  else {
+    return false;
+  }
+  return true;
+}

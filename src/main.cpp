@@ -128,40 +128,7 @@ int main(int argc, char **argv) {
   if (parser.isSet(chksumOpt)) {
     QString alg{parser.value(chksumOpt).trimmed().toLower()};
     chksum = true;
-    if (alg == "md4") {
-      hashAlg = QCryptographicHash::Md4;
-    }
-    else if (alg == "md5") {
-      hashAlg = QCryptographicHash::Md5;
-    }
-    else if (alg == "sha1") {
-      hashAlg = QCryptographicHash::Sha1;
-    }
-    else if (alg == "sha2-224") {
-      hashAlg = QCryptographicHash::Sha224;
-    }
-    else if (alg == "sha2-256") {
-      hashAlg = QCryptographicHash::Sha256;
-    }
-    else if (alg == "sha2-384") {
-      hashAlg = QCryptographicHash::Sha384;
-    }
-    else if (alg == "sha2-512") {
-      hashAlg = QCryptographicHash::Sha512;
-    }
-    else if (alg == "sha3-224") {
-      hashAlg = QCryptographicHash::Sha3_224;
-    }
-    else if (alg == "sha3-256") {
-      hashAlg = QCryptographicHash::Sha3_256;
-    }
-    else if (alg == "sha3-384") {
-      hashAlg = QCryptographicHash::Sha3_384;
-    }
-    else if (alg == "sha3-512") {
-      hashAlg = QCryptographicHash::Sha3_512;
-    }
-    else {
+    if (!Util::stringToHashAlg(alg, hashAlg)) {
       qCritical() << "ERROR Invalid hash function:" << qPrintable(alg);
       return -1;
     }
