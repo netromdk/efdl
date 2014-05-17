@@ -367,7 +367,9 @@ void Downloader::updateProgress() {
     }
   }
 
-  static int maxLen{0}, lastLines{0};
+  sstream << '\n';
+
+  static int lastLines{0};
   string msg{sstream.str()};
 
   // Remove additional lines, if any.
@@ -376,13 +378,10 @@ void Downloader::updateProgress() {
          << "\033[2K"; // Clear line.
   }
 
-  // Rewind to beginning with carriage return and fill with blanks to
-  // remove leftovers. Then rewind again and write actual message.
-  cout << '\r' << string(maxLen, ' ') << '\r' << msg;
+  // Rewind to beginning with carriage return and write actual
+  // message.
+  cout << '\r' << msg;
   cout.flush();
 
-  if (msg.size() > maxLen) {
-    maxLen = msg.size();
-  }
   lastLines = QString(msg.c_str()).split("\n").size() - 1;
 }
