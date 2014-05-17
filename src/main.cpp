@@ -59,9 +59,9 @@ int main(int argc, char **argv) {
     parser.showHelp(-1);
   }
 
-  int conns = 1, chunks = -1, chunkSize = -1;
-  bool ok, confirm = parser.isSet(confirmOpt),
-    verbose = parser.isSet(verboseOpt);
+  int conns{1}, chunks{-1}, chunkSize{-1};
+  bool ok{false}, confirm{parser.isSet(confirmOpt)},
+    verbose{parser.isSet(verboseOpt)};
   QString dir;
 
   if (parser.isSet(outputOpt)) {
