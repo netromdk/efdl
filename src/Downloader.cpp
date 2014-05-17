@@ -298,24 +298,33 @@ void Downloader::updateProgress() {
   // Lock on chunks map is required to be acquired going into this
   // method!
 
-  QDateTime now{QDateTime::currentDateTime()};
-  qint64 secs{started.secsTo(now)}, bytesPrSec{0};
-  if (bytesDown > 0 && secs > 0) {
-    bytesPrSec = bytesDown / secs;
+  using namespace std;
+  cout << "\r" // Rewind to beginning with carriage return.
+       << "[ ";
+
+  if (bytesDown == 0) {
+    cout << "Downloading.. Awaiting first chunk";
+  }
+  else {
+    QDateTime now{QDateTime::currentDateTime()};
+    qint64 secs{started.secsTo(now)}, bytesPrSec{0};
+    if (bytesDown > 0 && secs > 0) {
+      bytesPrSec = bytesDown / secs;
+    }
+
+    float perc = float(downloadCount) / float(rangeCount) * 100.0;
+
+    // Set fixed float formatting to one decimal digit.
+    cout.precision(1);
+    cout.setf(ios::fixed, ios::floatfield);
+
+    cout << perc << "% | "
+         << Util::sizeToString(bytesDown, 1).toStdString() << " / "
+         << Util::sizeToString(contentLen, 1).toStdString() << " @ "
+         << Util::sizeToString(bytesPrSec, 1).toStdString() << "/s | "
+         << "chunk " << downloadCount << " / " << rangeCount;
   }
 
-  float perc = float(downloadCount) / float(rangeCount) * 100.0;
-
-  // Set fixed float formatting to one decimal digit.
-  using namespace std;
-  cout.precision(1);
-  cout.setf(ios::fixed, ios::floatfield);
-
-  cout << "\r" // Rewind to beginning with carriage return.
-       << "[ " << perc << "% | "
-       << Util::sizeToString(bytesDown, 1).toStdString() << " / "
-       << Util::sizeToString(contentLen, 1).toStdString() << " @ "
-       << Util::sizeToString(bytesPrSec, 1).toStdString() << "/s | "
-       << "chunk " << downloadCount << " / " << rangeCount << " ]";
+  cout << " ]";
   cout.flush();
 }
