@@ -102,7 +102,7 @@ bool Util::askProceed(const QString &msg) {
   return output == "y" || output == "yes";
 }
 
-QString Util::sizeToString(qint64 bytes, float digits) {
+QString Util::formatSize(qint64 bytes, float digits) {
   constexpr double KB = 1024, MB = 1024 * KB, GB = 1024 * MB, TB = 1024 * GB;
   QString unit{"B"};
   double size = bytes;
@@ -123,4 +123,34 @@ QString Util::sizeToString(qint64 bytes, float digits) {
     unit = "KB";
   }
   return QString("%1 %2").arg(QString::number(size, 'f', digits)).arg(unit);
+}
+
+QString Util::formatTime(qint64 secs) {
+  constexpr qint64 Minute = 60, Hour = Minute * 60, Day = Hour * 24,
+    Week = Day * 7;
+  QString res;
+  if (secs >= Week) {
+    qint64 weeks = secs / Week;
+    res += QString("%1w").arg(weeks);
+    secs -= weeks * Week;
+  }
+  if (secs >= Day) {
+    qint64 days = secs / Day;
+    res += QString("%1%2d").arg(!res.isEmpty() ? " " : "").arg(days);
+    secs -= days * Day;
+  }
+  if (secs >= Hour) {
+    qint64 hours = secs / Hour;
+    res += QString("%1%2h").arg(!res.isEmpty() ? " " : "").arg(hours);
+    secs -= hours * Hour;
+  }
+  if (secs >= Minute) {
+    qint64 minutes = secs / Minute;
+    res += QString("%1%2m").arg(!res.isEmpty() ? " " : "").arg(minutes);
+    secs -= minutes * Minute;
+  }
+  if (secs > 0 || res.isEmpty()) {
+    res += QString("%1%2s").arg(!res.isEmpty() ? " " : "").arg(secs);
+  }
+  return res;
 }

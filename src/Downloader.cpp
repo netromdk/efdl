@@ -303,9 +303,10 @@ void Downloader::updateProgress() {
   }
   else {
     QDateTime now{QDateTime::currentDateTime()};
-    qint64 secs{started.secsTo(now)}, bytesPrSec{0};
+    qint64 secs{started.secsTo(now)}, bytesPrSec{0}, secsLeft{0};
     if (secs > 0) {
       bytesPrSec = bytesDown / secs;
+      secsLeft = (contentLen - bytesDown) / bytesPrSec;
     }
 
     float perc = float(downloadCount) / float(rangeCount) * 100.0;
@@ -315,9 +316,10 @@ void Downloader::updateProgress() {
     cout.setf(ios::fixed, ios::floatfield);
 
     cout << perc << "% | "
-         << Util::sizeToString(bytesDown, 1).toStdString() << " / "
-         << Util::sizeToString(contentLen, 1).toStdString() << " @ "
-         << Util::sizeToString(bytesPrSec, 1).toStdString() << "/s | "
+         << Util::formatSize(bytesDown, 1).toStdString() << " / "
+         << Util::formatSize(contentLen, 1).toStdString() << " @ "
+         << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
+         << Util::formatTime(secsLeft).toStdString() << " left | "
          << "chunk " << downloadCount << " / " << rangeCount;
   }
 
