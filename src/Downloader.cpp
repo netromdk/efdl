@@ -303,7 +303,8 @@ void Downloader::updateProgress() {
 
   cout << "\r" // Rewind to beginning with carriage return.
        << perc << "% -- "
-       << bytesDown << " of " << contentLen << " -- "
+       << Util::sizeToString(bytesDown).toStdString() << " of "
+       << Util::sizeToString(contentLen).toStdString() << " -- "
        << "chunk " << downloadCount << " of " << rangeCount;
   cout.flush();
 }

@@ -101,3 +101,26 @@ bool Util::askProceed(const QString &msg) {
   QString output = stream.readLine().toLower().trimmed();
   return output == "y" || output == "yes";
 }
+
+QString Util::sizeToString(qint64 bytes, float digits) {
+  constexpr double KB = 1024, MB = 1024 * KB, GB = 1024 * MB, TB = 1024 * GB;
+  QString unit{"B"};
+  double size = bytes;
+  if (size >= TB) {
+    size /= TB;
+    unit = "TB";
+  }
+  else if (size >= GB) {
+    size /= GB;
+    unit = "GB";
+  }
+  else if (size >= MB) {
+    size /= MB;
+    unit = "MB";
+  }
+  else if (size >= KB) {
+    size /= KB;
+    unit = "KB";
+  }
+  return QString("%1 %2").arg(QString::number(size, 'f', digits)).arg(unit);
+}
