@@ -34,6 +34,8 @@ Options:
   -v, --version         Displays version information.
   --verbose             Verbose mode.
   --confirm             Confirm to download on redirections.
+  -r, --resume          Resume download if file is present locally and the
+                        server supports it.
   -o, --output <dir>    Where to save file. (defaults to current directory)
   -c, --conns <num>     Number of simultaneous connections to use. (defaults to
                         1)
