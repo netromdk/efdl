@@ -307,16 +307,16 @@ void Downloader::updateProgress() {
 
   float perc = float(downloadCount) / float(rangeCount) * 100.0;
 
-  // Set fixed float formatting to two decimal digits.
+  // Set fixed float formatting to one decimal digit.
   using namespace std;
-  cout.precision(2);
+  cout.precision(1);
   cout.setf(ios::fixed, ios::floatfield);
 
   cout << "\r" // Rewind to beginning with carriage return.
        << "[ " << perc << "% | "
-       << Util::sizeToString(bytesDown).toStdString() << " / "
-       << Util::sizeToString(contentLen).toStdString() << " @ "
-       << Util::sizeToString(bytesPrSec).toStdString() << "/s | "
+       << Util::sizeToString(bytesDown, 1).toStdString() << " / "
+       << Util::sizeToString(contentLen, 1).toStdString() << " @ "
+       << Util::sizeToString(bytesPrSec, 1).toStdString() << "/s | "
        << "chunk " << downloadCount << " / " << rangeCount << " ]";
   cout.flush();
 }
