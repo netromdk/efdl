@@ -63,6 +63,15 @@ int main(int argc, char **argv) {
                                              "connection."));
   parser.addOption(connProgOpt);
 
+  QCommandLineOption chksumOpt(QStringList{"checksum"},
+                               QObject::tr("Generate a checksum of the downloaded "
+                                           "file using the given hash function. "
+                                           "Options are: md4, md5, sha1, sha2-224,"
+                                           " sha2-256, sha2-384, sha2-512, sha3-224,"
+                                           " sha3-256, sha3-384, sha3-512"),
+                               QObject::tr("fmt"));
+  parser.addOption(chksumOpt);
+
   // Process CLI arguments.
   parser.process(app);
   const QStringList args = parser.positionalArguments();
@@ -76,6 +85,8 @@ int main(int argc, char **argv) {
     resume{parser.isSet(resumeOpt)},
     connProg{parser.isSet(connProgOpt)};
   QString dir;
+  bool chksum{false};
+  QCryptographicHash::Algorithm hashAlg{QCryptographicHash::Sha3_512};
 
   if (parser.isSet(outputOpt)) {
     dir = parser.value(outputOpt);
@@ -114,6 +125,48 @@ int main(int argc, char **argv) {
     return -1;
   }
 
+  if (parser.isSet(chksumOpt)) {
+    QString alg{parser.value(chksumOpt).trimmed().toLower()};
+    chksum = true;
+    if (alg == "md4") {
+      hashAlg = QCryptographicHash::Md4;
+    }
+    else if (alg == "md5") {
+      hashAlg = QCryptographicHash::Md5;
+    }
+    else if (alg == "sha1") {
+      hashAlg = QCryptographicHash::Sha1;
+    }
+    else if (alg == "sha2-224") {
+      hashAlg = QCryptographicHash::Sha224;
+    }
+    else if (alg == "sha2-256") {
+      hashAlg = QCryptographicHash::Sha256;
+    }
+    else if (alg == "sha2-384") {
+      hashAlg = QCryptographicHash::Sha384;
+    }
+    else if (alg == "sha2-512") {
+      hashAlg = QCryptographicHash::Sha512;
+    }
+    else if (alg == "sha3-224") {
+      hashAlg = QCryptographicHash::Sha3_224;
+    }
+    else if (alg == "sha3-256") {
+      hashAlg = QCryptographicHash::Sha3_256;
+    }
+    else if (alg == "sha3-384") {
+      hashAlg = QCryptographicHash::Sha3_384;
+    }
+    else if (alg == "sha3-512") {
+      hashAlg = QCryptographicHash::Sha3_512;
+    }
+    else {
+      qCritical() << "ERROR Invalid hash function:" << qPrintable(alg);
+      return -1;
+    }
+  }
+
   QUrl url{args[0], QUrl::StrictMode};
   if (!url.isValid()) {
     qCritical() << "ERROR Invalid URL!";
@@ -132,6 +185,10 @@ int main(int argc, char **argv) {
   // Begin transfer in event loop.
   Downloader dl{url, dir, conns, chunks, chunkSize, confirm, resume, connProg,
                 verbose};
+  if (chksum) {
+    dl.createChecksum(hashAlg);
+  }
+
   QObject::connect(&dl, &Downloader::finished, &app, &QCoreApplication::quit);
   QTimer::singleShot(0, &dl, SLOT(start()));
 

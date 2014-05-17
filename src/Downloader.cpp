@@ -20,13 +20,19 @@ Downloader::Downloader(const QUrl &url, const QString &outputDir, int conns,
   : url{url}, outputDir{outputDir}, conns{conns}, chunks{chunks},
   chunkSize{chunkSize}, downloadCount{0}, rangeCount{0}, contentLen{0},
   offset{0}, bytesDown{0}, confirm{confirm}, resume{resume}, connProg{connProg},
-  verbose{verbose}, resumable{false}, reply{nullptr}
+  verbose{verbose}, resumable{false}, chksum{false},
+  hashAlg{QCryptographicHash::Sha3_512}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
   connect(this, &Downloader::chunkToThread,
           &commitThread, &CommitThread::enqueueChunk,
           Qt::QueuedConnection);
+}
+
+void Downloader::createChecksum(QCryptographicHash::Algorithm hashAlg) {
+  this->hashAlg = hashAlg;
+  chksum = true;
 }
 
 void Downloader::start() {
@@ -119,6 +125,7 @@ void Downloader::onDownloadTaskFailed(int num, Range range, int httpCode,
 void Downloader::onCommitThreadFinished() {
   connProg = false;
   updateProgress();
+  if (chksum) printChecksum();
   emit finished();
 }
 
@@ -213,12 +220,12 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
 void Downloader::setupFile() {
   QFileInfo fi{url.path()};
   QDir dir = (outputDir.isEmpty() ? QDir::current() : outputDir);
-  QString path{dir.absoluteFilePath(fi.fileName())};
-  qDebug() << "Saving to" << qPrintable(path);
+  outputPath = dir.absoluteFilePath(fi.fileName());
+  qDebug() << "Saving to" << qPrintable(outputPath);
 
-  auto *file = new QFile{path};
+  auto *file = new QFile{outputPath};
   if (file->exists() && !resume) {
-    if (!QFile::remove(path)) {
+    if (!QFile::remove(outputPath)) {
       qCritical() << "ERROR Could not truncate output file!";
       delete file;
       QCoreApplication::exit(-1);
@@ -445,4 +452,21 @@ void Downloader::updateProgress() {
   cout.flush();
 
   lastLines = QString(msg.c_str()).split("\n").size() - 1;
+}
+
+void Downloader::printChecksum() {
+  QCryptographicHash hasher{hashAlg};
+  QFile file{outputPath};
+  if (!file.open(QIODevice::ReadOnly)) {
+    qCritical() << "ERROR Checksum generation failed: could not open output"
+                << "file for reading.";
+    QCoreApplication::exit(-1);
+    return;
+  }
+  if (!hasher.addData(&file)) {
+    qCritical() << "ERROR Failed to do checksum of file.";
+    QCoreApplication::exit(-1);
+    return;
+  }
+  qDebug() << "Checksum:" << qPrintable(hasher.result().toHex());
 }

@@ -12,6 +12,7 @@
 #include <QThreadPool>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
+#include <QCryptographicHash>
 
 #include "Range.h"
 #include "CommitThread.h"
@@ -26,6 +27,8 @@ public:
   Downloader(const QUrl &url, const QString &outputDir, int conns, int chunks,
              int chunkSize, bool confirm, bool resume, bool connProg,
              bool verbose);
+
+  void createChecksum(QCryptographicHash::Algorithm hashAlg);
 
 signals: 
   void finished();
@@ -53,13 +56,15 @@ private:
   void saveChunk();
   void updateConnsMap();
   void updateProgress();
+  void printChecksum();
   
   QUrl url;
-  QString outputDir;
+  QString outputDir, outputPath;
   int conns, chunks, chunkSize, downloadCount, rangeCount;
   qint64 contentLen, offset, bytesDown;
-  bool confirm, resume, connProg, verbose, resumable;
+  bool confirm, resume, connProg, verbose, resumable, chksum;
   QDateTime started;
+  QCryptographicHash::Algorithm hashAlg;
 
   QNetworkAccessManager netmgr;
   QNetworkReply *reply;
