@@ -83,24 +83,21 @@ void Downloader::start() {
 void Downloader::onDownloadTaskStarted(int num) {
   QMutexLocker locker{&finishedMutex};
   connsMap[num] = Range{0, 0};
-  if (connsMap.size() > conns) {
-    connsMap.remove(connsMap.firstKey());
-  }
+  updateConnsMap();
   updateProgress();
 }
 
 void Downloader::onDownloadTaskProgress(int num, qint64 received, qint64 total) {
   QMutexLocker locker{&finishedMutex};
   connsMap[num] = Range{received, total};
-  if (connsMap.size() > conns) {
-    connsMap.remove(connsMap.firstKey());
-  }
+  updateConnsMap();
   updateProgress();
 }
 
 void Downloader::onDownloadTaskFinished(int num, Range range, QByteArray *data) {
   QMutexLocker locker{&finishedMutex};
   chunksMap[range.first] = data;
+  updateConnsMap();
   downloadCount++;
   bytesDown += data->size();
   updateProgress();
@@ -312,6 +309,29 @@ void Downloader::saveChunk() {
   // If everything has been downloaded then call method again.
   if (rangeCount == downloadCount) {
     saveChunk();
+  }
+}
+
+void Downloader::updateConnsMap() {
+  if (connsMap.size() <= conns) {
+    return;
+  }
+
+  bool rem = false;
+  foreach (const auto &key, connsMap.keys()) {
+    const auto &value = connsMap[key];
+    if (value.first > 0 && value.first == value.second) {
+      rem = true;
+      connsMap.remove(key);
+      break;
+    }
+  }
+  if (!rem) {
+    connsMap.remove(connsMap.firstKey());
+  }
+
+  if (connsMap.size() > conns) {
+    updateConnsMap();
   }
 }
 

@@ -49,6 +49,7 @@ private:
   void setupThreadPool();
   void download();
   void saveChunk();
+  void updateConnsMap();
   void updateProgress();
   
   QUrl url;
