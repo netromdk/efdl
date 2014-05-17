@@ -6,6 +6,7 @@ over HTTP/HTTPS.
 
 Program usage
 ====
+```
 Usage: efdl [options] URL
 Efficient downloading application.
 
@@ -25,3 +26,4 @@ Options:
 
 Arguments:
   URL                   URL to download.
+```
