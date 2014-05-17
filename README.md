@@ -4,6 +4,25 @@ efdl
 efdl, pronounced "Eff-dell", is an efficient downloading application
 over HTTP/HTTPS.
 
+Requirements
+============
+
+A C++11 compliant compiler (GCC 4.8+, Clang 3.3+ etc.), CMake 2.8.8+,
+and Qt 5.2+.
+
+Compilation
+===========
+
+To compile the source code and link the binaries do the following:
+
+1. Extract source and go into the diretory.
+2. mkdir build
+3. cd build
+4. cmake ..
+5. make
+
+This produces the *efdl* binary in the *bin* folder.
+
 Program usage
 ====
 ```
