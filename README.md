@@ -44,6 +44,10 @@ Options:
   --chunk-size <bytes>  Size of each chunk which dictates how many to use.
                         Cannot be used with --chunks.
   --show-conn-progress  Shows progress information for each connection.
+  --checksum <fmt>      Generate a checksum of the downloaded file using the
+                        given hash function. Options are: md4, md5, sha1,
+                        sha2-224, sha2-256, sha2-384, sha2-512, sha3-224,
+                        sha3-256, sha3-384, sha3-512
 
 Arguments:
   URL                   URL to download.
