@@ -1,10 +1,21 @@
-#include <iostream>
-
 #include <QObject>
 #include <QTextStream>
 
+#include <iostream>
+#ifdef WIN32
+  #include <io.h> // _isatty()
+  #define isATty _isatty
+#else
+  #include <unistd.h> // isatty()
+  #define isATty isatty
+#endif
+
 #include "Util.h"
 #include "Range.h"
+
+bool Util::isStdinPipe() {
+  return !isATty(fileno(stdin));
+}
 
 void Util::registerCustomTypes() {
   qRegisterMetaType<Range>("Range");

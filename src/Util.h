@@ -7,6 +7,7 @@
 
 class Util {
 public:
+  static bool isStdinPipe();
   static void registerCustomTypes();
   static QString getErrorString(QNetworkReply::NetworkError error);
   static bool askProceed(const QString &msg);
