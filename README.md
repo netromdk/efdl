@@ -10,7 +10,7 @@ Requirements
 A C++11 compliant compiler (GCC 4.8+, Clang 3.3+ etc.), CMake 2.8.8+,
 and Qt 5.2+.
 
-Compilation
+Compilation and installation
 ===========
 
 To compile the source code and link the binaries do the following:
@@ -22,6 +22,11 @@ To compile the source code and link the binaries do the following:
 5. make
 
 This produces the *efdl* binary in the *bin* folder.
+
+Notice the install prefix when running cmake before, which defaults to
+*/usr/local*. If you run `sudo make install` it will install into the
+*bin* folder there. Uninstalling is accomplished with `sudo make
+uninstall`.
 
 Program usage
 ====
