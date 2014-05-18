@@ -1,4 +1,13 @@
 # Qt 5
+IF (NOT WIN32)
+  # Added some paths to help find the modules on some systems.
+  SET(CMAKE_PREFIX_PATH
+    ${CMAKE_PREFIX_PATH}
+    "/usr/local/opt"
+    "/usr/local/opt/qt5"
+    )
+ENDIF()
+
 SET(CMAKE_AUTOMOC ON) # Moc when necessary.
 
 # As moc files are generated in the binary dir, tell CMake to always
