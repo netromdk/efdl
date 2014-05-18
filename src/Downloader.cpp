@@ -238,7 +238,10 @@ void Downloader::setupFile() {
     }
     else {
       offset = file->size();
-      qDebug() << "Resuming at offset" << qPrintable(Util::formatSize(offset, 1));
+      float perc = (long double)offset / (long double)contentLen * 100.0;
+      qDebug() << "Resuming at offset"
+               << qPrintable(Util::formatSize(offset, 1))
+               << qPrintable(QString("(%1%)").arg(perc, 0, 'f', 1));
     }
   }
 
@@ -401,7 +404,7 @@ void Downloader::updateProgress() {
                   : secs);
     }
 
-    float perc = float(downloadCount) / float(rangeCount) * 100.0;
+    float perc = (long double)(bytesDown + offset) / (long double)contentLen * 100.0;
 
     sstream << perc << "% | "
             << Util::formatSize(bytesDown + offset, 1).toStdString() << " / "
