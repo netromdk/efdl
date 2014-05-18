@@ -158,7 +158,7 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
 
   if (code >= 200 && code < 300) {
     if (url != this->url) {
-      qDebug() << "Resolved URL:" << qPrintable(url.toString());
+      qDebug() << "Resolved to" << qPrintable(url.toString());
     }
 
     if (confirm && didRedir) {

@@ -2,6 +2,7 @@
 #include <QTextStream>
 
 #include <iostream>
+
 #ifdef WIN32
   #include <io.h> // _isatty()
   #define isATty _isatty
@@ -108,7 +109,7 @@ bool Util::askProceed(const QString &msg) {
   cout << msg.toStdString().c_str();
   cout.flush();
 
-  QTextStream stream(stdin);
+  QTextStream stream(stdin, QIODevice::ReadOnly);
   QString output = stream.readLine().toLower().trimmed();
   return output == "y" || output == "yes";
 }
