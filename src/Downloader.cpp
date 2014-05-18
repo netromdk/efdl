@@ -59,9 +59,7 @@ void Downloader::start() {
     QCoreApplication::exit(-1);
     return;    
   }
-  if (verbose) {
-    qDebug() << "SIZE" << contentLen;
-  }
+  qDebug() << "File size" << qPrintable(Util::formatSize(contentLen, 1));
 
   // Check for header "Accept-Ranges" and whether it has "bytes"
   // supported.
@@ -240,9 +238,7 @@ void Downloader::setupFile() {
     }
     else {
       offset = file->size();
-      if (verbose) {
-        qDebug() << "OFFSET" << offset;
-      }
+      qDebug() << "Resuming at offset" << qPrintable(Util::formatSize(offset, 1));
     }
   }
 
