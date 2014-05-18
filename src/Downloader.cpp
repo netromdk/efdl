@@ -83,7 +83,11 @@ void Downloader::start() {
   reply->close();
   reply = nullptr;
 
-  setupFile();
+  if (!setupFile()) {
+    QCoreApplication::exit(-1);
+    return;
+  }
+
   createRanges();
   setupThreadPool();
 
@@ -215,7 +219,7 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
   return rep;
 }
 
-void Downloader::setupFile() {
+bool Downloader::setupFile() {
   QFileInfo fi{url.path()};
   QDir dir = (outputDir.isEmpty() ? QDir::current() : outputDir);
   outputPath = dir.absoluteFilePath(fi.fileName());
@@ -226,15 +230,21 @@ void Downloader::setupFile() {
     if (!QFile::remove(outputPath)) {
       qCritical() << "ERROR Could not truncate output file!";
       delete file;
-      QCoreApplication::exit(-1);
-      return;
+      return false;
     }
   }
 
   if (resume) {
     qint64 fileSize{file->size()};
     if (fileSize >= contentLen) {
-      qCritical() << "Cannot resume download. Continuing normally by truncating file.";
+      qCritical() << "Cannot resume download because the size is larger than or"
+                  << "equal:" << qPrintable(Util::formatSize(fileSize, 1))
+                  << "vs." << qPrintable(Util::formatSize(contentLen, 1));
+      if (!Util::askProceed("Do you want to truncate file and continue? [y/N] ")) {
+        qCritical() << "Aborting..";
+        delete file;
+        return false;
+      }
       resume = false;
     }
     else if (fileSize > 0) {
@@ -257,10 +267,11 @@ void Downloader::setupFile() {
   if (!file->open(openMode)) {
     qCritical() << "ERROR Could not open file for writing!";
     delete file;
-    QCoreApplication::exit(-1);
-    return;
+    return false;
   }
   commitThread.setFile(file);
+
+  return true;
 }
 
 void Downloader::createRanges() {

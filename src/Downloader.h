@@ -49,7 +49,7 @@ private slots:
   
 private:
   QNetworkReply *getHead(const QUrl &url);
-  void setupFile();
+  bool setupFile();
   void createRanges();
   void setupThreadPool();
   void download();
