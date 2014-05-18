@@ -53,6 +53,7 @@ Options:
   --chunk-size <bytes>  Size of each chunk which dictates how many to use.
                         Cannot be used with --chunks.
   --show-conn-progress  Shows progress information for each connection.
+  --show-http-headers   Shows all HTTP headers. Implies --verbose.
   --checksum <fmt>      Generate a checksum of the downloaded file using the
                         given hash function. Options are: md4, md5, sha1,
                         sha2-224, sha2-256, sha2-384, sha2-512, sha3-224,
