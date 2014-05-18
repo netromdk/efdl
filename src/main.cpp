@@ -36,21 +36,6 @@ int main(int argc, char **argv) {
   parser.addVersionOption();
   parser.addPositionalArgument("URLs", QObject::tr("URLs to download."), "URLs..");
 
-  QCommandLineOption verboseOpt(QStringList{"verbose"},
-                                QObject::tr("Verbose mode."));
-  parser.addOption(verboseOpt);
-
-  QCommandLineOption confirmOpt(QStringList{"confirm"},
-                                QObject::tr("Will ask to confirm to download on "
-                                            "redirections or whether to truncate"
-                                            " a completed file when resuming."));
-  parser.addOption(confirmOpt);
-
-  QCommandLineOption resumeOpt(QStringList{"r", "resume"},
-                                QObject::tr("Resume download if file is present "
-                                            "locally and the server supports it."));
-  parser.addOption(resumeOpt);
-
   QCommandLineOption outputOpt(QStringList{"o", "output"},
                               QObject::tr("Where to save file. (defaults to "
                                           "current directory)"),
@@ -62,6 +47,21 @@ int main(int argc, char **argv) {
                                           " use. (defaults to 1)"),
                               QObject::tr("num"));
   parser.addOption(connsOpt);
+
+  QCommandLineOption resumeOpt(QStringList{"r", "resume"},
+                                QObject::tr("Resume download if file is present "
+                                            "locally and the server supports it."));
+  parser.addOption(resumeOpt);
+
+  QCommandLineOption confirmOpt(QStringList{"confirm"},
+                                QObject::tr("Will ask to confirm to download on "
+                                            "redirections or whether to truncate"
+                                            " a completed file when resuming."));
+  parser.addOption(confirmOpt);
+
+  QCommandLineOption verboseOpt(QStringList{"verbose"},
+                                QObject::tr("Verbose mode."));
+  parser.addOption(verboseOpt);
 
   QCommandLineOption chunksOpt(QStringList{"chunks"},
                                QObject::tr("Number of chunks to split the download"

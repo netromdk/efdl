@@ -35,14 +35,14 @@ Also note that piping URLs will make confirmations default to 'no', if any.
 Options:
   -h, --help            Displays this help.
   -v, --version         Displays version information.
-  --verbose             Verbose mode.
-  --confirm             Will ask to confirm to download on redirections or
-                        whether to truncate a completed file when resuming.
-  -r, --resume          Resume download if file is present locally and the
-                        server supports it.
   -o, --output <dir>    Where to save file. (defaults to current directory)
   -c, --conns <num>     Number of simultaneous connections to use. (defaults to
                         1)
+  -r, --resume          Resume download if file is present locally and the
+                        server supports it.
+  --confirm             Will ask to confirm to download on redirections or
+                        whether to truncate a completed file when resuming.
+  --verbose             Verbose mode.
   --chunks <num>        Number of chunks to split the downloadup into. Cannot
                         be used with --chunk-size.
   --chunk-size <bytes>  Size of each chunk which dictates how many to use.
