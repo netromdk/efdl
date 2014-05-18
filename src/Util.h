@@ -14,6 +14,7 @@ public:
   static QString formatSize(qint64 bytes, float digits = 2);
   static QString formatTime(qint64 secs);
   static bool stringToHashAlg(QString str, QCryptographicHash::Algorithm &alg);
+  static QString formatHeaders(const QList<QNetworkReply::RawHeaderPair> &hdrs);
 };
 
 #endif // EFDL_UTIL_H

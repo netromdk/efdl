@@ -26,7 +26,7 @@ class Downloader : public QObject {
 public:
   Downloader(const QUrl &url, const QString &outputDir, int conns, int chunks,
              int chunkSize, bool confirm, bool resume, bool connProg,
-             bool verbose);
+             bool verbose, bool showHeaders);
 
   void createChecksum(QCryptographicHash::Algorithm hashAlg);
 
@@ -62,7 +62,7 @@ private:
   QString outputDir, outputPath;
   int conns, chunks, chunkSize, downloadCount, rangeCount;
   qint64 contentLen, offset, bytesDown;
-  bool confirm, resume, connProg, verbose, resumable, chksum;
+  bool confirm, resume, connProg, verbose, showHeaders, resumable, chksum;
   QDateTime started;
   QCryptographicHash::Algorithm hashAlg;
 

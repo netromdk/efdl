@@ -16,11 +16,11 @@
 
 Downloader::Downloader(const QUrl &url, const QString &outputDir, int conns,
                        int chunks, int chunkSize, bool confirm, bool resume,
-                       bool connProg, bool verbose)
+                       bool connProg, bool verbose, bool showHeaders)
   : url{url}, outputDir{outputDir}, conns{conns}, chunks{chunks},
   chunkSize{chunkSize}, downloadCount{0}, rangeCount{0}, contentLen{0},
   offset{0}, bytesDown{0}, confirm{confirm}, resume{resume}, connProg{connProg},
-  verbose{verbose}, resumable{false}, chksum{false},
+  verbose{verbose}, showHeaders{showHeaders}, resumable{false}, chksum{false},
   hashAlg{QCryptographicHash::Sha3_512}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
@@ -151,7 +151,10 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
   int code = rep->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   if (verbose) {
     qDebug() << "CODE" << code;
-    //qDebug() << "HEADERS" << rep->rawHeaderPairs();
+    if (showHeaders) {
+      qDebug() << "HEADERS"
+               << qPrintable(Util::formatHeaders(rep->rawHeaderPairs()));
+    }
   }
 
   static bool didRedir = false;

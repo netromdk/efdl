@@ -81,6 +81,10 @@ int main(int argc, char **argv) {
                                              "connection."));
   parser.addOption(connProgOpt);
 
+  QCommandLineOption showHeadersOpt(QStringList{"show-http-headers"},
+                                    QObject::tr("Shows all HTTP headers. Implies --verbose."));
+  parser.addOption(showHeadersOpt);
+
   QCommandLineOption chksumOpt(QStringList{"checksum"},
                                QObject::tr("Generate a checksum of the downloaded "
                                            "file using the given hash function. "
@@ -102,10 +106,13 @@ int main(int argc, char **argv) {
   bool ok{false}, confirm{parser.isSet(confirmOpt)},
     verbose{parser.isSet(verboseOpt)},
     resume{parser.isSet(resumeOpt)},
-    connProg{parser.isSet(connProgOpt)};
+    connProg{parser.isSet(connProgOpt)},
+    showHeaders{parser.isSet(showHeadersOpt)};
   QString dir;
   bool chksum{false};
   QCryptographicHash::Algorithm hashAlg{QCryptographicHash::Sha3_512};
+
+  if (showHeaders) verbose = true;
 
   if (parser.isSet(outputOpt)) {
     dir = parser.value(outputOpt);
@@ -177,7 +184,7 @@ int main(int argc, char **argv) {
   foreach (const QUrl &url, urls) {
     qDebug() << "Downloading" << qPrintable(url.toString());
     Downloader dl{url, dir, conns, chunks, chunkSize, confirm, resume, connProg,
-               verbose};
+        verbose, showHeaders};
     if (chksum) {
       dl.createChecksum(hashAlg);
     }

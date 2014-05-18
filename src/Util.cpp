@@ -207,3 +207,13 @@ bool Util::stringToHashAlg(QString str, QCryptographicHash::Algorithm &alg) {
   }
   return true;
 }
+
+QString Util::formatHeaders(const QList<QNetworkReply::RawHeaderPair> &hdrs) {
+  QString res;
+  foreach (const auto &pair, hdrs) {
+    res += QString("[%1: %2] ")
+      .arg(QString::fromUtf8(pair.first))
+      .arg(QString::fromUtf8(pair.second));
+  }
+  return res;
+}
