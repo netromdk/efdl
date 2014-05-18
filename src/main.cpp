@@ -2,6 +2,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QTimer>
+#include <QTextStream>
 #include <QCoreApplication>
 #include <QCommandLineParser>
 
@@ -14,11 +15,22 @@ int main(int argc, char **argv) {
   QCoreApplication::setApplicationName("efdl");
   QCoreApplication::setApplicationVersion(versionString(false));
 
+  // Read possible URLs from STDIN.
+  QString pipeIn;
+  if (Util::isStdinPipe()) {
+    QTextStream stream(stdin, QIODevice::ReadOnly);
+    pipeIn = stream.readAll();
+  }
+
   QCommandLineParser parser;
   parser.setApplicationDescription(QObject::tr("Efficient downloading application."));
   parser.addHelpOption();
   parser.addVersionOption();
-  parser.addPositionalArgument("URLs", QObject::tr("URLs to download."), "URLs..");
+  parser.addPositionalArgument("URLs",
+                               QObject::tr("URLs to download. If URLs are given "
+                                           "through STDIN then the positional "
+                                           "argument(s) are optional."),
+                               "URLs..");
 
   QCommandLineOption verboseOpt(QStringList{"verbose"},
                                 QObject::tr("Verbose mode."));
@@ -74,7 +86,8 @@ int main(int argc, char **argv) {
 
   // Process CLI arguments.
   parser.process(app);
-  const QStringList args = parser.positionalArguments();
+  QStringList args = parser.positionalArguments();
+  args.append(pipeIn.split('\n', QString::SkipEmptyParts));
   if (args.size() < 1) {
     parser.showHelp(-1);
   }
@@ -136,7 +149,7 @@ int main(int argc, char **argv) {
 
   QList<QUrl> urls;
   foreach (const QString &arg, args) {
-    QUrl url{arg, QUrl::StrictMode};
+    QUrl url{arg.trimmed(), QUrl::StrictMode};
     if (!url.isValid()) {
       qCritical() << "ERROR Invalid URL:" << arg;
       return -1;

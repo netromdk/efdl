@@ -50,5 +50,6 @@ Options:
                         sha3-256, sha3-384, sha3-512
 
 Arguments:
-  URLs                  URLs to download.
+  URLs                  URLs to download. If URLs are given through STDIN then
+                        the positional argument(s) are optional.
 ```
