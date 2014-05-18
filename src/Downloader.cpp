@@ -240,10 +240,14 @@ bool Downloader::setupFile() {
       qCritical() << "Cannot resume download because the size is larger than or"
                   << "equal:" << qPrintable(Util::formatSize(fileSize, 1))
                   << "vs." << qPrintable(Util::formatSize(contentLen, 1));
-      if (!Util::askProceed("Do you want to truncate file and continue? [y/N] ")) {
+      if (confirm &&
+          !Util::askProceed("Do you want to truncate file and continue? [y/N] ")) {
         qCritical() << "Aborting..";
         delete file;
         return false;
+      }
+      if (!confirm) {
+        qDebug() << "Truncating file";
       }
       resume = false;
     }

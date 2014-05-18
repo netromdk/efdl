@@ -41,7 +41,9 @@ int main(int argc, char **argv) {
   parser.addOption(verboseOpt);
 
   QCommandLineOption confirmOpt(QStringList{"confirm"},
-                                QObject::tr("Confirm to download on redirections."));
+                                QObject::tr("Will ask to confirm to download on "
+                                            "redirections or whether to truncate"
+                                            " a completed file when resuming."));
   parser.addOption(confirmOpt);
 
   QCommandLineOption resumeOpt(QStringList{"r", "resume"},

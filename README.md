@@ -36,7 +36,8 @@ Options:
   -h, --help            Displays this help.
   -v, --version         Displays version information.
   --verbose             Verbose mode.
-  --confirm             Confirm to download on redirections.
+  --confirm             Will ask to confirm to download on redirections or
+                        whether to truncate a completed file when resuming.
   -r, --resume          Resume download if file is present locally and the
                         server supports it.
   -o, --output <dir>    Where to save file. (defaults to current directory)
