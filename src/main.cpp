@@ -23,14 +23,18 @@ int main(int argc, char **argv) {
   }
 
   QCommandLineParser parser;
-  parser.setApplicationDescription(QObject::tr("Efficient downloading application."));
+  parser.setApplicationDescription(QObject::tr("Efficient downloading application.") +
+                                   "\n\n" +
+                                   QObject::tr("If URLs are given through STDIN "
+                                               "then the positional argument(s) "
+                                               "are optional.") +
+                                   "\n" +
+                                   QObject::tr("Also note that piping URLs will "
+                                               "make confirmations default to "
+                                               "'no', if any."));
   parser.addHelpOption();
   parser.addVersionOption();
-  parser.addPositionalArgument("URLs",
-                               QObject::tr("URLs to download. If URLs are given "
-                                           "through STDIN then the positional "
-                                           "argument(s) are optional."),
-                               "URLs..");
+  parser.addPositionalArgument("URLs", QObject::tr("URLs to download."), "URLs..");
 
   QCommandLineOption verboseOpt(QStringList{"verbose"},
                                 QObject::tr("Verbose mode."));

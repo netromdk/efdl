@@ -29,6 +29,9 @@ Program usage
 Usage: efdl [options] URLs..
 Efficient downloading application.
 
+If URLs are given through STDIN then the positional argument(s) are optional.
+Also note that piping URLs will make confirmations default to 'no', if any.
+
 Options:
   -h, --help            Displays this help.
   -v, --version         Displays version information.
@@ -50,6 +53,5 @@ Options:
                         sha3-256, sha3-384, sha3-512
 
 Arguments:
-  URLs                  URLs to download. If URLs are given through STDIN then
-                        the positional argument(s) are optional.
+  URLs                  URLs to download.
 ```
