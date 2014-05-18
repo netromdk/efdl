@@ -26,7 +26,7 @@ This produces the *efdl* binary in the *bin* folder.
 Program usage
 ====
 ```
-Usage: efdl [options] URL
+Usage: efdl [options] URLs..
 Efficient downloading application.
 
 Options:
@@ -50,5 +50,5 @@ Options:
                         sha3-256, sha3-384, sha3-512
 
 Arguments:
-  URL                   URL to download.
+  URLs                  URLs to download.
 ```

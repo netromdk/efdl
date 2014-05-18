@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
   parser.setApplicationDescription(QObject::tr("Efficient downloading application."));
   parser.addHelpOption();
   parser.addVersionOption();
-  parser.addPositionalArgument("URL", QObject::tr("URL to download."));
+  parser.addPositionalArgument("URLs", QObject::tr("URLs to download."), "URLs..");
 
   QCommandLineOption verboseOpt(QStringList{"verbose"},
                                 QObject::tr("Verbose mode."));
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   // Process CLI arguments.
   parser.process(app);
   const QStringList args = parser.positionalArguments();
-  if (args.size() != 1) {
+  if (args.size() < 1) {
     parser.showHelp(-1);
   }
 
@@ -134,30 +134,43 @@ int main(int argc, char **argv) {
     }
   }
 
-  QUrl url{args[0], QUrl::StrictMode};
-  if (!url.isValid()) {
-    qCritical() << "ERROR Invalid URL!";
-    return -1;
-  }
+  QList<QUrl> urls;
+  foreach (const QString &arg, args) {
+    QUrl url{arg, QUrl::StrictMode};
+    if (!url.isValid()) {
+      qCritical() << "ERROR Invalid URL:" << arg;
+      return -1;
+    }
 
-  const QStringList schemes{"http", "https"};
-  if (!schemes.contains(url.scheme().toLower())) {
-    qCritical() << "ERROR Invalid scheme! Valid ones are:" <<
-      qPrintable(schemes.join(" "));
-    return -1;
+    const QStringList schemes{"http", "https"};
+    if (!schemes.contains(url.scheme().toLower())) {
+      qCritical() << "ERROR Invalid scheme:" << qPrintable(arg);
+      qCritical() << "Valid ones are:" << qPrintable(schemes.join(" "));
+      return -1;
+    }
+
+    urls << url;
   }
 
   Util::registerCustomTypes();
 
-  // Begin transfer in event loop.
-  Downloader dl{url, dir, conns, chunks, chunkSize, confirm, resume, connProg,
-                verbose};
-  if (chksum) {
-    dl.createChecksum(hashAlg);
+  int res;
+  foreach (const QUrl &url, urls) {
+    qDebug() << "Downloading" << qPrintable(url.toString());
+    Downloader dl{url, dir, conns, chunks, chunkSize, confirm, resume, connProg,
+               verbose};
+    if (chksum) {
+      dl.createChecksum(hashAlg);
+    }
+
+    // Begin transfer in event loop.
+    QObject::connect(&dl, &Downloader::finished, &app, &QCoreApplication::quit);
+    QTimer::singleShot(0, &dl, SLOT(start()));
+    res = app.exec();
+    if (res != 0) break;
+
+    if (urls.last() != url) qDebug();
   }
 
-  QObject::connect(&dl, &Downloader::finished, &app, &QCoreApplication::quit);
-  QTimer::singleShot(0, &dl, SLOT(start()));
-
-  return app.exec();
+  return res;
 }
