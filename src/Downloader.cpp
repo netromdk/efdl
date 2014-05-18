@@ -277,7 +277,7 @@ void Downloader::createRanges() {
   }
 
   if (verbose) {
-    qDebug() << "CHUNK SIZE" << size;
+    qDebug() << "CHUNK SIZE" << qPrintable(Util::formatSize(size, 1));
   }
 
   for (qint64 start = offset; start < contentLen; start += size) {
