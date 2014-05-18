@@ -232,12 +232,13 @@ void Downloader::setupFile() {
   }
 
   if (resume) {
-    if (file->size() >= contentLen) {
+    qint64 fileSize{file->size()};
+    if (fileSize >= contentLen) {
       qCritical() << "Cannot resume download. Continuing normally by truncating file.";
       resume = false;
     }
-    else {
-      offset = file->size();
+    else if (fileSize > 0) {
+      offset = fileSize;
       float perc = (long double)offset / (long double)contentLen * 100.0;
       qDebug() << "Resuming at offset"
                << qPrintable(Util::formatSize(offset, 1))
