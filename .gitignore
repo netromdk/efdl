@@ -1,9 +1,7 @@
 *~
 .#*
 #*
-build
-build_debug
-build_linux
+build*
 *.slo
 *.lo
 *.o
