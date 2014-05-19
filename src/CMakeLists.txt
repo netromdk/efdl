@@ -1,19 +1,21 @@
 SET(BIN_NAME efdl)
 SET(LIB_NAME efdlcore)
 
+INCLUDE_DIRECTORIES( ../include )
+
 ADD_LIBRARY(
   ${LIB_NAME}
 
-  Util.h
+  ../include/Util.h
   Util.cpp
 
-  Downloader.h
+  ../include/Downloader.h
   Downloader.cpp
 
-  DownloadTask.h
+  ../include/DownloadTask.h
   DownloadTask.cpp
 
-  CommitThread.h
+  ../include/CommitThread.h
   CommitThread.cpp
   )
 
@@ -23,7 +25,7 @@ ADD_EXECUTABLE(
   ${BIN_NAME}
 
   main.cpp
-  Version.h
+  ../include/Version.h
   )
 
 QT5_USE_MODULES(${BIN_NAME} Core)
