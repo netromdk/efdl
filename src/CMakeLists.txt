@@ -1,10 +1,8 @@
-SET(NAME efdl)
+SET(BIN_NAME efdl)
+SET(LIB_NAME efdlcore)
 
-ADD_EXECUTABLE(
-  ${NAME}
-
-  main.cpp
-  Version.h
+ADD_LIBRARY(
+  ${LIB_NAME}
 
   Util.h
   Util.cpp
@@ -19,6 +17,16 @@ ADD_EXECUTABLE(
   CommitThread.cpp
   )
 
-QT5_USE_MODULES(${NAME} Core Network)
+QT5_USE_MODULES(${LIB_NAME} Core Network)
 
-INSTALL(TARGETS ${NAME} DESTINATION bin)
+ADD_EXECUTABLE(
+  ${BIN_NAME}
+
+  main.cpp
+  Version.h
+  )
+
+QT5_USE_MODULES(${BIN_NAME} Core)
+TARGET_LINK_LIBRARIES(${BIN_NAME} ${LIB_NAME})
+
+INSTALL(TARGETS ${BIN_NAME} DESTINATION bin)
