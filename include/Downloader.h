@@ -31,6 +31,8 @@ namespace efdl {
 
     void createChecksum(QCryptographicHash::Algorithm hashAlg);
 
+    QUrl getUrl() const { return url; }
+
   signals:
     void finished();
 

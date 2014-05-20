@@ -11,6 +11,8 @@
 #include "Downloader.h"
 using namespace efdl;
 
+#include "DownloadManager.h"
+
 int main(int argc, char **argv) {
   QCoreApplication app(argc, argv);
   QCoreApplication::setApplicationName("efdl");
@@ -182,22 +184,21 @@ int main(int argc, char **argv) {
   Util::registerCustomTypes();
 
   int res;
+  DownloadManager manager;
   foreach (const QUrl &url, urls) {
-    qDebug() << "Downloading" << qPrintable(url.toString());
-    Downloader dl{url, dir, conns, chunks, chunkSize, confirm, resume, connProg,
-        verbose, showHeaders};
+    auto *dl = new Downloader{url, dir, conns, chunks, chunkSize, confirm,
+                              resume, connProg, verbose, showHeaders};
     if (chksum) {
-      dl.createChecksum(hashAlg);
+      dl->createChecksum(hashAlg);
     }
 
-    // Begin transfer in event loop.
-    QObject::connect(&dl, &Downloader::finished, &app, &QCoreApplication::quit);
-    QTimer::singleShot(0, &dl, SLOT(start()));
-    res = app.exec();
-    if (res != 0) break;
-
-    if (urls.last() != url) qDebug();
+    manager.add(dl);
   }
 
-  return res;
+  // Begin downloads in event loop.
+  QObject::connect(&manager, &DownloadManager::finished,
+                   &app, &QCoreApplication::quit);
+  QTimer::singleShot(0, &manager, SLOT(start()));
+
+  return app.exec();
 }

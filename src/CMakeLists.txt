@@ -26,6 +26,9 @@ ADD_EXECUTABLE(
 
   main.cpp
   ../include/Version.h
+
+  DownloadManager.h
+  DownloadManager.cpp
   )
 
 QT5_USE_MODULES(${BIN_NAME} Core)
