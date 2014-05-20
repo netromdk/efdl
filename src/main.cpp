@@ -162,6 +162,7 @@ int main(int argc, char **argv) {
   }
 
   QList<QUrl> urls;
+  const QStringList schemes{"http", "https"};
   foreach (const QString &arg, args) {
     QUrl url{arg.trimmed(), QUrl::StrictMode};
     if (!url.isValid()) {
@@ -169,7 +170,6 @@ int main(int argc, char **argv) {
       return -1;
     }
 
-    const QStringList schemes{"http", "https"};
     if (!schemes.contains(url.scheme().toLower())) {
       qCritical() << "ERROR Invalid scheme:" << qPrintable(arg);
       qCritical() << "Valid ones are:" << qPrintable(schemes.join(" "));
