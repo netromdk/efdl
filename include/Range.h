@@ -3,6 +3,8 @@
 
 #include <QPair>
 
-typedef QPair<qint64, qint64> Range; // (start, end)
+namespace efdl {
+  typedef QPair<qint64, qint64> Range; // (start, end)
+}
 
 #endif // EFDL_RANGE_H

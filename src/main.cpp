@@ -9,6 +9,7 @@
 #include "Util.h"
 #include "Version.h"
 #include "Downloader.h"
+using namespace efdl;
 
 int main(int argc, char **argv) {
   QCoreApplication app(argc, argv);
