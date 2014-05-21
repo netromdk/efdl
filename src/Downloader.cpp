@@ -117,6 +117,8 @@ namespace efdl {
     }
 
     QNetworkRequest req{url};
+    req.setRawHeader("Accept-Encoding", "identity");
+
     auto *rep = netmgr.head(req);
     QEventLoop loop;
     connect(rep, &QNetworkReply::finished, &loop, &QEventLoop::quit);

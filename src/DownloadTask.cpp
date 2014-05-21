@@ -23,6 +23,7 @@ namespace efdl {
 
     QNetworkRequest req{url};
     req.setRawHeader("Range", rangeHdr.toUtf8());
+    req.setRawHeader("Accept-Encoding", "identity");
 
     QNetworkAccessManager netmgr;
     auto *rep = netmgr.get(req);
