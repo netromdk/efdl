@@ -1,4 +1,5 @@
 #include <QDebug>
+#include <QCoreApplication>
 
 #include <sstream>
 #include <iostream>
@@ -106,7 +107,13 @@ void DownloadManager::onChunkFinished(int num, Range range) {
 
 void DownloadManager::onChunkFailed(int num, Range range, int httpCode,
                                     QNetworkReply::NetworkError error) {
-  //qDebug() << "CHUNK FAILED:" << num << range << httpCode << error;
+  qCritical() << "Chunk" << num << "failed on range" << range;
+  qCritical() << "HTTP code:" << httpCode;
+  qCritical() << "Error:" << qPrintable(Util::getErrorString(error));
+  qCritical() << "Aborting..";
+
+  cleanup();
+  QCoreApplication::exit(-1);
 }
 
 void DownloadManager::cleanup() {

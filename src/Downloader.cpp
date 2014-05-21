@@ -103,7 +103,6 @@ namespace efdl {
 
   void Downloader::onDownloadTaskFailed(int num, Range range, int httpCode,
                                         QNetworkReply::NetworkError error) {
-    qDebug() << "failed" << range << Util::getErrorString(error);
     emit chunkFailed(num, range, httpCode, error);
   }
 
