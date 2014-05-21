@@ -21,19 +21,13 @@ namespace efdl {
     : url{url}, outputDir{outputDir}, conns{conns}, chunks{chunks},
     chunkSize{chunkSize}, downloadCount{0}, rangeCount{0}, contentLen{0},
     offset{0}, confirm{confirm}, resume{resume}, verbose{verbose},
-    showHeaders{showHeaders}, resumable{false}, chksum{false},
-    hashAlg{QCryptographicHash::Sha3_512}, reply{nullptr}
-{
-  connect(&commitThread, &CommitThread::finished,
-          this, &Downloader::onCommitThreadFinished);
-  connect(this, &Downloader::chunkToThread,
-          &commitThread, &CommitThread::enqueueChunk,
-          Qt::QueuedConnection);
-}
-
-  void Downloader::createChecksum(QCryptographicHash::Algorithm hashAlg) {
-    this->hashAlg = hashAlg;
-    chksum = true;
+    showHeaders{showHeaders}, resumable{false}, reply{nullptr}
+  {
+    connect(&commitThread, &CommitThread::finished,
+            this, &Downloader::onCommitThreadFinished);
+    connect(this, &Downloader::chunkToThread,
+            &commitThread, &CommitThread::enqueueChunk,
+            Qt::QueuedConnection);
   }
 
   void Downloader::start() {
@@ -92,7 +86,7 @@ namespace efdl {
     createRanges();
     setupThreadPool();
 
-    emit information(contentLen, rangeCount, conns, offset);
+    emit information(outputPath, contentLen, rangeCount, conns, offset);
 
     // Start actual download.
     download();
@@ -358,22 +352,5 @@ namespace efdl {
     if (rangeCount == downloadCount) {
       saveChunk();
     }
-  }
-
-  void Downloader::printChecksum() {
-    QCryptographicHash hasher{hashAlg};
-    QFile file{outputPath};
-    if (!file.open(QIODevice::ReadOnly)) {
-      qCritical() << "ERROR Checksum generation failed: could not open output"
-                  << "file for reading.";
-      QCoreApplication::exit(-1);
-      return;
-    }
-    if (!hasher.addData(&file)) {
-      qCritical() << "ERROR Failed to do checksum of file.";
-      QCoreApplication::exit(-1);
-      return;
-    }
-    qDebug() << "Checksum:" << qPrintable(hasher.result().toHex());
   }
 }

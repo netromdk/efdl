@@ -29,13 +29,12 @@ namespace efdl {
                int chunkSize, bool confirm, bool resume, bool verbose,
                bool showHeaders);
 
-    void createChecksum(QCryptographicHash::Algorithm hashAlg);
-
     QUrl getUrl() const { return url; }
 
   signals:
     void finished();
-    void information(qint64 size, int chunksAmount, int conns, qint64 offset);
+    void information(const QString &outputPath, qint64 size, int chunksAmount,
+                     int conns, qint64 offset);
 
     // Signals for individual chunks.
     void chunkStarted(int num);
@@ -63,14 +62,12 @@ namespace efdl {
     void setupThreadPool();
     void download();
     void saveChunk();
-    void printChecksum();
   
     QUrl url;
     QString outputDir, outputPath;
     int conns, chunks, chunkSize, downloadCount, rangeCount;
     qint64 contentLen, offset;
-    bool confirm, resume, verbose, showHeaders, resumable, chksum;
-    QCryptographicHash::Algorithm hashAlg;
+    bool confirm, resume, verbose, showHeaders, resumable;
 
     QNetworkAccessManager netmgr;
     QNetworkReply *reply;

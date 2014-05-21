@@ -10,8 +10,9 @@
 using namespace efdl;
 
 DownloadManager::DownloadManager(bool connProg)
-  : connProg{connProg}, conns{0}, chunksAmount{0}, chunksFinished{0}, size{0},
-  offset{0}, bytesDown{0}
+  : connProg{connProg}, chksum{false}, conns{0}, chunksAmount{0},
+  chunksFinished{0}, size{0}, offset{0}, bytesDown{0},
+  hashAlg{QCryptographicHash::Sha3_512}
 { }
 
 DownloadManager::~DownloadManager() {
@@ -20,6 +21,11 @@ DownloadManager::~DownloadManager() {
 
 void DownloadManager::add(Downloader *entry) {
   queue << entry;
+}
+
+void DownloadManager::createChecksum(QCryptographicHash::Algorithm hashAlg) {
+  this->hashAlg = hashAlg;
+  chksum = true;
 }
 
 void DownloadManager::start() {
@@ -35,6 +41,8 @@ void DownloadManager::next() {
     connProg = false;
     updateProgress();
     connProg = tmp;
+
+    if (chksum) printChecksum();
 
     // Separate each download with a newline.
     if (!queue.isEmpty()) qDebug();
@@ -65,9 +73,11 @@ void DownloadManager::next() {
 
   started = QDateTime::currentDateTime();
 }
-void DownloadManager::onInformation(qint64 size, int chunksAmount, int conns,
+void DownloadManager::onInformation(const QString &outputPath, qint64 size,
+                                    int chunksAmount, int conns,
                                     qint64 offset) {
   //qDebug() << "CHUNKS AMOUNT:" << total;
+  this->outputPath = outputPath;
   this->size = size;
   this->chunksAmount = chunksAmount;
   this->conns = conns;
@@ -199,4 +209,19 @@ void DownloadManager::updateProgress() {
   cout.flush();
 
   lastLines = QString(msg.c_str()).split("\n").size() - 1;
+}
+
+void DownloadManager::printChecksum() {
+  QCryptographicHash hasher{hashAlg};
+  QFile file{outputPath};
+  if (!file.open(QIODevice::ReadOnly)) {
+    qCritical() << "ERROR Checksum generation failed: could not open output"
+                << "file for reading.";
+     return;
+  }
+  if (!hasher.addData(&file)) {
+    qCritical() << "ERROR Failed to do checksum of file.";
+     return;
+  }
+  qDebug() << "Checksum:" << qPrintable(hasher.result().toHex());
 }

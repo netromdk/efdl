@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QDateTime>
 #include <QNetworkReply>
+#include <QCryptographicHash>
 
 #include "Range.h"
 
@@ -21,6 +22,8 @@ public:
 
   void add(efdl::Downloader *entry);
 
+  void createChecksum(QCryptographicHash::Algorithm hashAlg);
+
 signals:
   void finished();
                                          
@@ -30,7 +33,8 @@ public slots:
 private slots:
   void next();
 
-  void onInformation(qint64 size, int chunksAmount, int conns, qint64 offset);
+  void onInformation(const QString &outputPath, qint64 size, int chunksAmount,
+                     int conns, qint64 offset);
   void onChunkStarted(int num);
   void onChunkProgress(int num, qint64 received, qint64 total);
   void onChunkFinished(int num, efdl::Range range);
@@ -41,13 +45,16 @@ private:
   void cleanup();
   void updateConnsMap();
   void updateProgress();
+  void printChecksum();
 
   QQueue<efdl::Downloader*> queue;
 
-  bool connProg;
+  bool connProg, chksum;
+  QString outputPath;
   int conns, chunksAmount, chunksFinished;
   qint64 size, offset, bytesDown;
   QDateTime started;
+  QCryptographicHash::Algorithm hashAlg;
   QMap<int, efdl::Range> connsMap; // num -> download progress
 };
 
