@@ -1,7 +1,18 @@
+#include <QDebug>
+
+#include <sstream>
+#include <iostream>
+
 #include "DownloadManager.h"
 
+#include "Util.h"
 #include "Downloader.h"
 using namespace efdl;
+
+DownloadManager::DownloadManager(bool connProg)
+  : connProg{connProg}, conns{0}, chunksAmount{0}, chunksFinished{0}, size{0},
+  offset{0}, bytesDown{0}
+{ }
 
 DownloadManager::~DownloadManager() {
   qDeleteAll(queue);
@@ -16,9 +27,18 @@ void DownloadManager::start() {
 }
 
 void DownloadManager::next() {
-  // Separate each download with a newline.
   static bool first{true};
-  if (!first && !queue.isEmpty()) qDebug();
+  if (!first) {
+    // Update progress with total download time with no connection
+    // lines.
+    bool tmp{connProg};
+    connProg = false;
+    updateProgress();
+    connProg = tmp;
+
+    // Separate each download with a newline.
+    if (!queue.isEmpty()) qDebug();
+  }
   if (first) first = false;
   
   if (queue.isEmpty()) {
@@ -26,8 +46,157 @@ void DownloadManager::next() {
     return;
   }
 
+  cleanup();
+
   auto *entry = queue.dequeue();
   qDebug() << "Downloading" << qPrintable(entry->getUrl().toString());
   connect(entry, &Downloader::finished, this, &DownloadManager::next);
+  connect(entry, &Downloader::information,
+          this, &DownloadManager::onInformation);
+  connect(entry, &Downloader::chunkStarted,
+          this, &DownloadManager::onChunkStarted);
+  connect(entry, &Downloader::chunkProgress,
+          this, &DownloadManager::onChunkProgress);
+  connect(entry, &Downloader::chunkFinished,
+          this, &DownloadManager::onChunkFinished);
+  connect(entry, &Downloader::chunkFailed,
+          this, &DownloadManager::onChunkFailed);
   entry->start();
+
+  started = QDateTime::currentDateTime();
+}
+void DownloadManager::onInformation(qint64 size, int chunksAmount, int conns,
+                                    qint64 offset) {
+  //qDebug() << "CHUNKS AMOUNT:" << total;
+  this->size = size;
+  this->chunksAmount = chunksAmount;
+  this->conns = conns;
+  this->offset = offset;
+  updateProgress();
+}
+
+void DownloadManager::onChunkStarted(int num) {
+  //qDebug() << "CHUNK STARTED:" << num;
+  connsMap[num] = Range{0, 0};
+  updateConnsMap();
+  updateProgress();
+}
+
+void DownloadManager::onChunkProgress(int num, qint64 received, qint64 total) {
+  //qDebug() << "CHUNK PROGRESS:" << num << received << total;
+  connsMap[num] = Range{received, total};
+  updateConnsMap();
+  updateProgress();
+}
+
+void DownloadManager::onChunkFinished(int num, Range range) {
+  //qDebug() << "CHUNK FINISHED:" << num << range;
+  chunksFinished++;
+  bytesDown += (range.second - range.first + 1);
+  updateConnsMap();
+  updateProgress();
+}
+
+void DownloadManager::onChunkFailed(int num, Range range, int httpCode,
+                                    QNetworkReply::NetworkError error) {
+  //qDebug() << "CHUNK FAILED:" << num << range << httpCode << error;
+}
+
+void DownloadManager::cleanup() {
+  chunksAmount = chunksFinished = size = offset = bytesDown = 0;
+}
+
+void DownloadManager::updateConnsMap() {
+  if (connsMap.size() <= conns) {
+    return;
+  }
+
+  bool rem = false;
+  foreach (const auto &key, connsMap.keys()) {
+    const auto &value = connsMap[key];
+    if (value.first > 0 && value.first == value.second) {
+      rem = true;
+      connsMap.remove(key);
+      break;
+    }
+  }
+  if (!rem) {
+    connsMap.remove(connsMap.firstKey());
+  }
+
+  if (connsMap.size() > conns) {
+    updateConnsMap();
+  }
+}
+
+void DownloadManager::updateProgress() {
+  using namespace std;
+  stringstream sstream;
+
+  // Set fixed float formatting to one decimal digit.
+  sstream.precision(1);
+  sstream.setf(ios::fixed, ios::floatfield);
+
+  sstream << "[ ";
+
+  if (bytesDown == 0) {
+    sstream << "Downloading.. Awaiting first chunk";
+  }
+  else {
+    bool done = (bytesDown + offset == size);
+    QDateTime now{QDateTime::currentDateTime()};
+    qint64 secs{started.secsTo(now)}, bytesPrSec{0}, secsLeft{0};
+    if (secs > 0) {
+      bytesPrSec = bytesDown / secs;
+      secsLeft = (!done ? (size - bytesDown - offset) / bytesPrSec
+                  : secs);
+    }
+
+    float perc = (long double)(bytesDown + offset) / (long double)size * 100.0;
+
+    sstream << perc << "% | "
+            << Util::formatSize(bytesDown + offset, 1).toStdString() << " / "
+            << Util::formatSize(size, 1).toStdString() << " @ "
+            << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
+            << Util::formatTime(secsLeft).toStdString() << " "
+            << (!done ? "left" : "total") << " | "
+            << "chunk " << chunksFinished << " / " << chunksAmount;
+  }
+
+  sstream << " ]";
+
+  if (connProg) {
+    foreach (const int &num, connsMap.keys()) {
+      const auto &value = connsMap[num];
+      qint64 received = value.first, total = value.second;
+      float perc{0};
+      if (received > 0 && total > 0) {
+        perc = (long double) received / (long double) total * 100.0;
+      }
+      sstream << "\n{ chunk #" << num << ": " << perc << "% ";
+      if (total > 0) {
+        sstream << "| " << Util::formatSize(received, 1).toStdString() << " / "
+                << Util::formatSize(total, 1).toStdString() << " ";
+      }
+      sstream << "}";
+    }
+  }
+
+  sstream << '\n';
+
+  static int lastLines{0};
+  string msg{sstream.str()};
+
+  // Remove additional lines, if any.
+  for (int i = 0; i < lastLines; i++) {
+    cout << "\033[A" // Go up a line (\033 = ESC, [ = CTRL).
+         << "\033[2K"; // Clear line.
+  }
+
+  // Rewind to beginning with carriage return and write actual
+  // message.
+  cout << '\r' << msg;
+  cout.flush();
+
+  lastLines = QString(msg.c_str()).split("\n").size() - 1;
 }

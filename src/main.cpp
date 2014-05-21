@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  DownloadManager manager;
+  DownloadManager manager{connProg};
   const QStringList schemes{"http", "https"};
   foreach (const QString &arg, args) {
     QUrl url{arg.trimmed(), QUrl::StrictMode};
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
     }
 
     auto *dl = new Downloader{url, dir, conns, chunks, chunkSize, confirm,
-                              resume, connProg, verbose, showHeaders};
+                              resume, verbose, showHeaders};
     if (chksum) {
       dl->createChecksum(hashAlg);
     }

@@ -17,13 +17,12 @@
 namespace efdl {
   Downloader::Downloader(const QUrl &url, const QString &outputDir, int conns,
                          int chunks, int chunkSize, bool confirm, bool resume,
-                         bool connProg, bool verbose, bool showHeaders)
+                         bool verbose, bool showHeaders)
     : url{url}, outputDir{outputDir}, conns{conns}, chunks{chunks},
     chunkSize{chunkSize}, downloadCount{0}, rangeCount{0}, contentLen{0},
-    offset{0}, bytesDown{0}, confirm{confirm}, resume{resume},
-    connProg{connProg}, verbose{verbose}, showHeaders{showHeaders},
-    resumable{false}, chksum{false}, hashAlg{QCryptographicHash::Sha3_512},
-    reply{nullptr}
+    offset{0}, confirm{confirm}, resume{resume}, verbose{verbose},
+    showHeaders{showHeaders}, resumable{false}, chksum{false},
+    hashAlg{QCryptographicHash::Sha3_512}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
@@ -93,43 +92,31 @@ namespace efdl {
     createRanges();
     setupThreadPool();
 
+    emit information(contentLen, rangeCount, conns, offset);
+
     // Start actual download.
     download();
-  }
-
-  void Downloader::onDownloadTaskStarted(int num) {
-    QMutexLocker locker{&finishedMutex};
-    connsMap[num] = Range{0, 0};
-    updateConnsMap();
-    updateProgress();
-  }
-
-  void Downloader::onDownloadTaskProgress(int num, qint64 received, qint64 total) {
-    QMutexLocker locker{&finishedMutex};
-    connsMap[num] = Range{received, total};
-    updateConnsMap();
-    updateProgress();
   }
 
   void Downloader::onDownloadTaskFinished(int num, Range range, QByteArray *data) {
     QMutexLocker locker{&finishedMutex};
     chunksMap[range.first] = data;
-    updateConnsMap();
     downloadCount++;
-    bytesDown += data->size();
-    updateProgress();
     saveChunk();
+
+    emit chunkFinished(num, range);
   }
 
   void Downloader::onDownloadTaskFailed(int num, Range range, int httpCode,
                                         QNetworkReply::NetworkError error) {
     qDebug() << "failed" << range << Util::getErrorString(error);
+    emit chunkFailed(num, range, httpCode, error);
   }
 
   void Downloader::onCommitThreadFinished() {
-    connProg = false;
-    updateProgress();
+    /* TODO
     if (chksum) printChecksum();
+    */
     emit finished();
   }
 
@@ -333,16 +320,13 @@ namespace efdl {
 
   void Downloader::download() {
     // Fill queue with tasks and start immediately.
-    started = QDateTime::currentDateTime();
-    updateProgress();
     int num{1};
     while (!ranges.empty()) {
       auto range = ranges.dequeue();
       auto *task = new DownloadTask{url, range, num++};
-      connect(task, &DownloadTask::started,
-              this, &Downloader::onDownloadTaskStarted);
-      connect(task, &DownloadTask::progress,
-              this, &Downloader::onDownloadTaskProgress);
+      connect(task, SIGNAL(started(int)), SIGNAL(chunkStarted(int)));
+      connect(task, SIGNAL(progress(int, qint64, qint64)),
+              SIGNAL(chunkProgress(int, qint64, qint64)));
       connect(task, &DownloadTask::finished,
               this, &Downloader::onDownloadTaskFinished);
       connect(task, &DownloadTask::failed,
@@ -374,104 +358,6 @@ namespace efdl {
     if (rangeCount == downloadCount) {
       saveChunk();
     }
-  }
-
-  void Downloader::updateConnsMap() {
-    if (connsMap.size() <= conns) {
-      return;
-    }
-
-    bool rem = false;
-    foreach (const auto &key, connsMap.keys()) {
-      const auto &value = connsMap[key];
-      if (value.first > 0 && value.first == value.second) {
-        rem = true;
-        connsMap.remove(key);
-        break;
-      }
-    }
-    if (!rem) {
-      connsMap.remove(connsMap.firstKey());
-    }
-
-    if (connsMap.size() > conns) {
-      updateConnsMap();
-    }
-  }
-
-  void Downloader::updateProgress() {
-    // Lock on chunks map is required to be acquired going into this
-    // method!
-
-    using namespace std;
-    stringstream sstream;
-
-    // Set fixed float formatting to one decimal digit.
-    sstream.precision(1);
-    sstream.setf(ios::fixed, ios::floatfield);
-
-    sstream << "[ ";
-
-    if (bytesDown == 0) {
-      sstream << "Downloading.. Awaiting first chunk";
-    }
-    else {
-      bool done = (bytesDown + offset == contentLen);
-      QDateTime now{QDateTime::currentDateTime()};
-      qint64 secs{started.secsTo(now)}, bytesPrSec{0}, secsLeft{0};
-      if (secs > 0) {
-        bytesPrSec = bytesDown / secs;
-        secsLeft = (!done ? (contentLen - bytesDown - offset) / bytesPrSec
-                    : secs);
-      }
-
-      float perc = (long double)(bytesDown + offset) / (long double)contentLen * 100.0;
-
-      sstream << perc << "% | "
-              << Util::formatSize(bytesDown + offset, 1).toStdString() << " / "
-              << Util::formatSize(contentLen, 1).toStdString() << " @ "
-              << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
-              << Util::formatTime(secsLeft).toStdString() << " "
-              << (!done ? "left" : "total") << " | "
-              << "chunk " << downloadCount << " / " << rangeCount;
-    }
-
-    sstream << " ]";
-
-    if (connProg) {
-      foreach (const int &num, connsMap.keys()) {
-        const auto &value = connsMap[num];
-        qint64 received = value.first, total = value.second;
-        float perc{0};
-        if (received > 0 && total > 0) {
-          perc = (long double) received / (long double) total * 100.0;
-        }
-        sstream << "\n{ chunk #" << num << ": " << perc << "% ";
-        if (total > 0) {
-          sstream << "| " << Util::formatSize(received, 1).toStdString() << " / "
-                  << Util::formatSize(total, 1).toStdString() << " ";
-        }
-        sstream << "}";
-      }
-    }
-
-    sstream << '\n';
-
-    static int lastLines{0};
-    string msg{sstream.str()};
-
-    // Remove additional lines, if any.
-    for (int i = 0; i < lastLines; i++) {
-      cout << "\033[A" // Go up a line (\033 = ESC, [ = CTRL).
-           << "\033[2K"; // Clear line.
-    }
-
-    // Rewind to beginning with carriage return and write actual
-    // message.
-    cout << '\r' << msg;
-    cout.flush();
-
-    lastLines = QString(msg.c_str()).split("\n").size() - 1;
   }
 
   void Downloader::printChecksum() {

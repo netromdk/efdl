@@ -26,8 +26,8 @@ namespace efdl {
   
   public:
     Downloader(const QUrl &url, const QString &outputDir, int conns, int chunks,
-               int chunkSize, bool confirm, bool resume, bool connProg,
-               bool verbose, bool showHeaders);
+               int chunkSize, bool confirm, bool resume, bool verbose,
+               bool showHeaders);
 
     void createChecksum(QCryptographicHash::Algorithm hashAlg);
 
@@ -35,6 +35,14 @@ namespace efdl {
 
   signals:
     void finished();
+    void information(qint64 size, int chunksAmount, int conns, qint64 offset);
+
+    // Signals for individual chunks.
+    void chunkStarted(int num);
+    void chunkProgress(int num, qint64 received, qint64 total);
+    void chunkFinished(int num, Range range);
+    void chunkFailed(int num, Range range, int httpCode,
+                    QNetworkReply::NetworkError error);
 
     // Internal signal.
     void chunkToThread(const QByteArray *data, bool last);
@@ -43,8 +51,6 @@ namespace efdl {
     void start();
 
   private slots:
-    void onDownloadTaskStarted(int num);
-    void onDownloadTaskProgress(int num, qint64 received, qint64 total);
     void onDownloadTaskFinished(int num, Range range, QByteArray *data);
     void onDownloadTaskFailed(int num, Range range, int httpCode,
                               QNetworkReply::NetworkError error);
@@ -57,16 +63,13 @@ namespace efdl {
     void setupThreadPool();
     void download();
     void saveChunk();
-    void updateConnsMap();
-    void updateProgress();
     void printChecksum();
   
     QUrl url;
     QString outputDir, outputPath;
     int conns, chunks, chunkSize, downloadCount, rangeCount;
-    qint64 contentLen, offset, bytesDown;
-    bool confirm, resume, connProg, verbose, showHeaders, resumable, chksum;
-    QDateTime started;
+    qint64 contentLen, offset;
+    bool confirm, resume, verbose, showHeaders, resumable, chksum;
     QCryptographicHash::Algorithm hashAlg;
 
     QNetworkAccessManager netmgr;
@@ -77,7 +80,6 @@ namespace efdl {
     QQueue<Range> ranges;
     QThreadPool pool;
     QMap<qint64, QByteArray*> chunksMap; // range start -> data pointer
-    QMap<int, Range> connsMap; // num -> download progress
     CommitThread commitThread;
   };
 }
