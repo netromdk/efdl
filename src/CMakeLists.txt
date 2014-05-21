@@ -7,6 +7,9 @@ ADD_LIBRARY(
   ${LIB_NAME}
   ${LIBRARY_TYPE}
 
+  ../include/Range.h
+  Range.cpp
+
   ../include/Util.h
   Util.cpp
 
