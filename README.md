@@ -22,7 +22,7 @@ To compile the source code and link the binaries do the following:
 1. Extract source and go into the diretory.
 2. `mkdir build`
 3. `cd build`
-4. `cmake ..`
+4. `cmake ..` (If you want the shared library then use `-DLIBRARY_TYPE=SHARED`)
 5. `make`
 
 This produces the *efdl* binary in the *bin* directory.
