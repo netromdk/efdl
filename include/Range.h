@@ -5,7 +5,12 @@
 #include <QDebug>
 
 namespace efdl {
-  typedef QPair<qint64, qint64> Range; // (start, end)
+  /**
+   * Encapsulates a file data range of the form [start, end[
+   *
+   * Note that "end" is not inclusive!
+   */
+  typedef QPair<qint64, qint64> Range;
 }
 
 QDebug operator<<(QDebug dbg, const efdl::Range &r);
