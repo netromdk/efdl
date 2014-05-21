@@ -55,6 +55,7 @@ private:
   qint64 size, offset, bytesDown;
   QDateTime started;
   QCryptographicHash::Algorithm hashAlg;
+  efdl::Downloader *downloader;
   QMap<int, efdl::Range> connsMap; // num -> download progress
 };
 

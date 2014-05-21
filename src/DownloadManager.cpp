@@ -12,10 +12,11 @@ using namespace efdl;
 DownloadManager::DownloadManager(bool connProg)
   : connProg{connProg}, chksum{false}, conns{0}, chunksAmount{0},
   chunksFinished{0}, size{0}, offset{0}, bytesDown{0},
-  hashAlg{QCryptographicHash::Sha3_512}
+  hashAlg{QCryptographicHash::Sha3_512}, downloader{nullptr}
 { }
 
 DownloadManager::~DownloadManager() {
+  cleanup();
   qDeleteAll(queue);
 }
 
@@ -56,20 +57,20 @@ void DownloadManager::next() {
 
   cleanup();
 
-  auto *entry = queue.dequeue();
-  qDebug() << "Downloading" << qPrintable(entry->getUrl().toString());
-  connect(entry, &Downloader::finished, this, &DownloadManager::next);
-  connect(entry, &Downloader::information,
+  downloader = queue.dequeue();
+  qDebug() << "Downloading" << qPrintable(downloader->getUrl().toString());
+  connect(downloader, &Downloader::finished, this, &DownloadManager::next);
+  connect(downloader, &Downloader::information,
           this, &DownloadManager::onInformation);
-  connect(entry, &Downloader::chunkStarted,
+  connect(downloader, &Downloader::chunkStarted,
           this, &DownloadManager::onChunkStarted);
-  connect(entry, &Downloader::chunkProgress,
+  connect(downloader, &Downloader::chunkProgress,
           this, &DownloadManager::onChunkProgress);
-  connect(entry, &Downloader::chunkFinished,
+  connect(downloader, &Downloader::chunkFinished,
           this, &DownloadManager::onChunkFinished);
-  connect(entry, &Downloader::chunkFailed,
+  connect(downloader, &Downloader::chunkFailed,
           this, &DownloadManager::onChunkFailed);
-  entry->start();
+  downloader->start();
 
   started = QDateTime::currentDateTime();
 }
@@ -114,6 +115,12 @@ void DownloadManager::onChunkFailed(int num, Range range, int httpCode,
 
 void DownloadManager::cleanup() {
   chunksAmount = chunksFinished = size = offset = bytesDown = 0;
+
+  if (downloader) {
+    downloader->disconnect();
+    downloader->deleteLater();
+    downloader = nullptr;
+  }
 }
 
 void DownloadManager::updateConnsMap() {
