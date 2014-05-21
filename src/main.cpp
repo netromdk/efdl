@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  QList<QUrl> urls;
+  DownloadManager manager;
   const QStringList schemes{"http", "https"};
   foreach (const QString &arg, args) {
     QUrl url{arg.trimmed(), QUrl::StrictMode};
@@ -178,14 +178,6 @@ int main(int argc, char **argv) {
       return -1;
     }
 
-    urls << url;
-  }
-
-  Util::registerCustomTypes();
-
-  int res;
-  DownloadManager manager;
-  foreach (const QUrl &url, urls) {
     auto *dl = new Downloader{url, dir, conns, chunks, chunkSize, confirm,
                               resume, connProg, verbose, showHeaders};
     if (chksum) {
@@ -194,6 +186,8 @@ int main(int argc, char **argv) {
 
     manager.add(dl);
   }
+
+  Util::registerCustomTypes();
 
   // Begin downloads in event loop.
   QObject::connect(&manager, &DownloadManager::finished,
