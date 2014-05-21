@@ -158,8 +158,10 @@ void DownloadManager::updateProgress() {
     qint64 secs{started.secsTo(now)}, bytesPrSec{0}, secsLeft{0};
     if (secs > 0) {
       bytesPrSec = bytesDown / secs;
-      secsLeft = (!done ? (size - bytesDown - offset) / bytesPrSec
-                  : secs);
+      if (bytesPrSec > 0) {
+        secsLeft = (!done ? (size - bytesDown - offset) / bytesPrSec
+                    : secs);
+      }
     }
 
     float perc = (long double)(bytesDown + offset) / (long double)size * 100.0;

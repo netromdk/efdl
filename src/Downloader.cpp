@@ -108,9 +108,6 @@ namespace efdl {
   }
 
   void Downloader::onCommitThreadFinished() {
-    /* TODO
-    if (chksum) printChecksum();
-    */
     emit finished();
   }
 
