@@ -77,7 +77,6 @@ void DownloadManager::next() {
 void DownloadManager::onInformation(const QString &outputPath, qint64 size,
                                     int chunksAmount, int conns,
                                     qint64 offset) {
-  //qDebug() << "CHUNKS AMOUNT:" << total;
   this->outputPath = outputPath;
   this->size = size;
   this->chunksAmount = chunksAmount;
@@ -87,21 +86,18 @@ void DownloadManager::onInformation(const QString &outputPath, qint64 size,
 }
 
 void DownloadManager::onChunkStarted(int num) {
-  //qDebug() << "CHUNK STARTED:" << num;
   connsMap[num] = Range{0, 0};
   updateConnsMap();
   updateProgress();
 }
 
 void DownloadManager::onChunkProgress(int num, qint64 received, qint64 total) {
-  //qDebug() << "CHUNK PROGRESS:" << num << received << total;
   connsMap[num] = Range{received, total};
   updateConnsMap();
   updateProgress();
 }
 
 void DownloadManager::onChunkFinished(int num, Range range) {
-  //qDebug() << "CHUNK FINISHED:" << num << range;
   chunksFinished++;
   bytesDown += (range.second - range.first + 1);
   updateConnsMap();
@@ -115,6 +111,7 @@ void DownloadManager::onChunkFailed(int num, Range range, int httpCode,
 
 void DownloadManager::cleanup() {
   chunksAmount = chunksFinished = size = offset = bytesDown = 0;
+  connsMap.clear();
 
   if (downloader) {
     downloader->disconnect();
