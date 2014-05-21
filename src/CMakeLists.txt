@@ -5,6 +5,7 @@ INCLUDE_DIRECTORIES( ../include )
 
 ADD_LIBRARY(
   ${LIB_NAME}
+  ${LIBRARY_TYPE}
 
   ../include/Util.h
   Util.cpp
