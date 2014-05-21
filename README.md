@@ -1,13 +1,17 @@
 efdl
 ====
 
-efdl, pronounced "Eff-dell", is an efficient downloading application
-over HTTP/HTTPS.
+efdl, pronounced "Eff-dell", is an efficient downloading command-line
+application that currently supports transfers using HTTP(S).
+
+It is also possible to use the functionality of *efdl* in your own
+program. Just link the *libefdlcore* static library and use the
+headers in the *include* directory.
 
 Requirements
 ============
 
-A C++11 compliant compiler (GCC 4.8+, Clang 3.3+ etc.), CMake 2.8.8+,
+A C++11 compliant compiler (GCC 4.8+, Clang 3.3+ etc.), CMake 2.8.12+,
 and Qt 5.2+.
 
 Compilation and installation
@@ -21,11 +25,11 @@ To compile the source code and link the binaries do the following:
 4. `cmake ..`
 5. `make`
 
-This produces the *efdl* binary in the *bin* folder.
+This produces the *efdl* binary in the *bin* directory.
 
 Notice the install prefix when running cmake before, which defaults to
 */usr/local*. If you run `sudo make install` it will install into the
-*bin* folder there. Uninstalling is accomplished with `sudo make
+*bin* directory there. Uninstalling is accomplished with `sudo make
 uninstall`.
 
 Program usage
