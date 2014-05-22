@@ -303,8 +303,7 @@ namespace efdl {
     if (conns > ranges.size()) {
       int old{conns};
       conns = ranges.size();
-      qDebug() << "CAP connection amount capped to amount of chunks:"
-               << old << "->" << conns;
+      qDebug() << "Connections capped to chunks:" << old << "->" << conns;
     }
 
     pool.setMaxThreadCount(conns);
