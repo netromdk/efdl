@@ -42,6 +42,7 @@ void DownloadManager::next() {
     // lines.
     bool tmp{connProg};
     connProg = false;
+    lastProgress = QDateTime(); // Force update.
     updateProgress();
     connProg = tmp;
 
@@ -158,12 +159,11 @@ void DownloadManager::updateConnsMap() {
 
 void DownloadManager::updateProgress() {
   // Only update progress every half second.
-  static QDateTime lastUpdate;
   QDateTime now{QDateTime::currentDateTime()};
-  if (!lastUpdate.isNull() && lastUpdate.msecsTo(now) < 500) {
+  if (!lastProgress.isNull() && lastProgress.msecsTo(now) < 500) {
     return;
   }
-  lastUpdate = now;
+  lastProgress = now;
 
   using namespace std;
   stringstream sstream;

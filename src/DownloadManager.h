@@ -54,7 +54,7 @@ private:
   QString outputPath;
   int conns, chunksAmount, chunksFinished;
   qint64 size, offset, bytesDown;
-  QDateTime started;
+  QDateTime started, lastProgress;
   QCryptographicHash::Algorithm hashAlg;
   efdl::Downloader *downloader;
   QMutex chunkMutex;
