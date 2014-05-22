@@ -14,6 +14,16 @@ namespace efdl {
   class Downloader;
 }
 
+class Chunk {
+public:
+  Chunk(efdl::Range range, QDateTime started)
+    : range{range}, started{started}
+  { }
+
+  efdl::Range range;
+  QDateTime started, ended;
+};
+
 class DownloadManager : public QObject {
   Q_OBJECT
   
@@ -44,7 +54,7 @@ private slots:
 
 private:
   void cleanup();
-  void updateConnsMap();
+  void updateChunkMap();
   void updateProgress();
   void printChecksum();
 
@@ -58,7 +68,7 @@ private:
   QCryptographicHash::Algorithm hashAlg;
   efdl::Downloader *downloader;
   QMutex chunkMutex;
-  QMap<int, efdl::Range> connsMap; // num -> download progress
+  QMap<int, Chunk*> chunkMap; // num -> download progress
 };
 
 #endif // EFDL_DOWNLOAD_MANAGER_H

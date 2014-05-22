@@ -90,24 +90,24 @@ void DownloadManager::onInformation(const QString &outputPath, qint64 size,
 
 void DownloadManager::onChunkStarted(int num) {
   QMutexLocker locker{&chunkMutex};
-  connsMap[num] = Range{0, 0};
-  updateConnsMap();
+  chunkMap[num] = new Chunk{Range{0, 0}, QDateTime::currentDateTime()};
+  updateChunkMap();
   updateProgress();
 }
 
 void DownloadManager::onChunkProgress(int num, qint64 received, qint64 total) {
   QMutexLocker locker{&chunkMutex};
-  const Range &r = connsMap[num];
-  bytesDown += received - r.first;
-  connsMap[num] = Range{received, total};
-  updateConnsMap();
+  Chunk *chunk = chunkMap[num];
+  bytesDown += received - chunk->range.first;
+  chunk->range = Range{received, total};
+  updateChunkMap();
   updateProgress();
 }
 
 void DownloadManager::onChunkFinished(int num, Range range) {
   QMutexLocker locker{&chunkMutex};
   chunksFinished++;
-  updateConnsMap();
+  updateChunkMap();
   updateProgress();
 }
 
@@ -125,7 +125,9 @@ void DownloadManager::onChunkFailed(int num, Range range, int httpCode,
 
 void DownloadManager::cleanup() {
   chunksAmount = chunksFinished = size = offset = bytesDown = 0;
-  connsMap.clear();
+
+  qDeleteAll(chunkMap);
+  chunkMap.clear();
 
   if (downloader) {
     downloader->disconnect();
@@ -134,26 +136,28 @@ void DownloadManager::cleanup() {
   }
 }
 
-void DownloadManager::updateConnsMap() {
-  if (connsMap.size() <= conns) {
+void DownloadManager::updateChunkMap() {
+  if (chunkMap.size() <= conns) {
     return;
   }
 
   bool rem = false;
-  foreach (const auto &key, connsMap.keys()) {
-    const auto &value = connsMap[key];
-    if (value.first > 0 && value.first == value.second) {
+  foreach (const auto &key, chunkMap.keys()) {
+    const auto *chunk = chunkMap[key];
+    const auto &range = chunk->range;
+    if (range.first > 0 && range.first == range.second) {
       rem = true;
-      connsMap.remove(key);
+      chunkMap.remove(key);
+      delete chunk;
       break;
     }
   }
   if (!rem) {
-    connsMap.remove(connsMap.firstKey());
+    delete chunkMap.take(chunkMap.firstKey());
   }
 
-  if (connsMap.size() > conns) {
-    updateConnsMap();
+  if (chunkMap.size() > conns) {
+    updateChunkMap();
   }
 }
 
@@ -202,9 +206,25 @@ void DownloadManager::updateProgress() {
   sstream << " ]";
 
   if (connProg) {
-    foreach (const int &num, connsMap.keys()) {
-      const auto &value = connsMap[num];
-      qint64 received = value.first, total = value.second;
+    foreach (const int &num, chunkMap.keys()) {
+      auto *chunk = chunkMap[num];
+      qint64 received = chunk->range.first, total = chunk->range.second;
+
+      bool done = (received > 0 && received == total);
+      if (done && chunk->ended.isNull()) {
+        chunk->ended = now;
+      }
+
+      qint64 secs{chunk->started.secsTo(done ? chunk->ended : now)},
+        bytesPrSec{0}, secsLeft{0};
+      if (secs > 0) {
+        bytesPrSec = received / secs;
+        if (bytesPrSec > 0) {
+          secsLeft = (!done ? (total - received) / bytesPrSec
+                      : secs);
+        }
+      }
+
       float perc{0};
       if (received > 0 && total > 0) {
         perc = (long double) received / (long double) total * 100.0;
@@ -212,7 +232,9 @@ void DownloadManager::updateProgress() {
       sstream << "\n{ chunk #" << num << ": " << perc << "% ";
       if (total > 0) {
         sstream << "| " << Util::formatSize(received, 1).toStdString() << " / "
-                << Util::formatSize(total, 1).toStdString() << " ";
+                << Util::formatSize(total, 1).toStdString() << " | "
+                << Util::formatTime(secsLeft).toStdString() << " "
+                << (!done ? "left" : "total") << " ";
       }
       sstream << "}";
     }
@@ -226,7 +248,7 @@ void DownloadManager::updateProgress() {
   // Remove additional lines, if any.
   for (int i = 0; i < lastLines; i++) {
     cout << "\033[A" // Go up a line (\033 = ESC, [ = CTRL).
-         << "\033[2K"; // Clear line.
+         << "\033[2K"; // Kill line.
   }
 
   // Rewind to beginning with carriage return and write actual
