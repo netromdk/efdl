@@ -1,4 +1,5 @@
 #include <QDebug>
+#include <QMutexLocker>
 #include <QCoreApplication>
 
 #include <sstream>
@@ -87,12 +88,14 @@ void DownloadManager::onInformation(const QString &outputPath, qint64 size,
 }
 
 void DownloadManager::onChunkStarted(int num) {
+  QMutexLocker locker{&chunkMutex};
   connsMap[num] = Range{0, 0};
   updateConnsMap();
   updateProgress();
 }
 
 void DownloadManager::onChunkProgress(int num, qint64 received, qint64 total) {
+  QMutexLocker locker{&chunkMutex};
   const Range &r = connsMap[num];
   bytesDown += received - r.first;
   connsMap[num] = Range{received, total};
@@ -101,6 +104,7 @@ void DownloadManager::onChunkProgress(int num, qint64 received, qint64 total) {
 }
 
 void DownloadManager::onChunkFinished(int num, Range range) {
+  QMutexLocker locker{&chunkMutex};
   chunksFinished++;
   updateConnsMap();
   updateProgress();
@@ -108,6 +112,7 @@ void DownloadManager::onChunkFinished(int num, Range range) {
 
 void DownloadManager::onChunkFailed(int num, Range range, int httpCode,
                                     QNetworkReply::NetworkError error) {
+  QMutexLocker locker{&chunkMutex};
   qCritical() << "Chunk" << num << "failed on range" << range;
   qCritical() << "HTTP code:" << httpCode;
   qCritical() << "Error:" << qPrintable(Util::getErrorString(error));

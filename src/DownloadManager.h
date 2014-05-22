@@ -2,6 +2,7 @@
 #define EFDL_DOWNLOAD_MANAGER_H
 
 #include <QQueue>
+#include <QMutex>
 #include <QObject>
 #include <QDateTime>
 #include <QNetworkReply>
@@ -56,6 +57,7 @@ private:
   QDateTime started;
   QCryptographicHash::Algorithm hashAlg;
   efdl::Downloader *downloader;
+  QMutex chunkMutex;
   QMap<int, efdl::Range> connsMap; // num -> download progress
 };
 
