@@ -239,7 +239,8 @@ void DownloadManager::updateProgress() {
                 << (!done
                     ? Util::formatSize(received, 1).toStdString() + " / "
                     : "")
-                << Util::formatSize(total, 1).toStdString() << " | "
+                << Util::formatSize(total, 1).toStdString() << " @ "
+                << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
                 << Util::formatTime(secsLeft).toStdString() << " "
                 << (!done ? "left" : "total") << " ";
       }
