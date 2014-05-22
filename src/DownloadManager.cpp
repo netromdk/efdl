@@ -152,6 +152,14 @@ void DownloadManager::updateConnsMap() {
 }
 
 void DownloadManager::updateProgress() {
+  // Only update progress every half second.
+  static QDateTime lastUpdate;
+  QDateTime now{QDateTime::currentDateTime()};
+  if (!lastUpdate.isNull() && lastUpdate.msecsTo(now) < 500) {
+    return;
+  }
+  lastUpdate = now;
+
   using namespace std;
   stringstream sstream;
 
@@ -166,7 +174,6 @@ void DownloadManager::updateProgress() {
   }
   else {
     bool done = (bytesDown + offset == size);
-    QDateTime now{QDateTime::currentDateTime()};
     qint64 secs{started.secsTo(now)}, bytesPrSec{0}, secsLeft{0};
     if (secs > 0) {
       bytesPrSec = bytesDown / secs;
