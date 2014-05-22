@@ -93,6 +93,8 @@ void DownloadManager::onChunkStarted(int num) {
 }
 
 void DownloadManager::onChunkProgress(int num, qint64 received, qint64 total) {
+  const Range &r = connsMap[num];
+  bytesDown += received - r.first;
   connsMap[num] = Range{received, total};
   updateConnsMap();
   updateProgress();
@@ -100,7 +102,6 @@ void DownloadManager::onChunkProgress(int num, qint64 received, qint64 total) {
 
 void DownloadManager::onChunkFinished(int num, Range range) {
   chunksFinished++;
-  bytesDown += (range.second - range.first + 1);
   updateConnsMap();
   updateProgress();
 }
@@ -161,7 +162,7 @@ void DownloadManager::updateProgress() {
   sstream << "[ ";
 
   if (bytesDown == 0) {
-    sstream << "Downloading.. Awaiting first chunk";
+    sstream << "Starting up download..";
   }
   else {
     bool done = (bytesDown + offset == size);
