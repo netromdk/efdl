@@ -194,9 +194,9 @@ void DownloadManager::updateProgress() {
             << Util::formatSize(bytesDown + offset, 1).toStdString() << " / "
             << Util::formatSize(size, 1).toStdString() << " @ "
             << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
+            << "chunk " << chunksFinished << " / " << chunksAmount << " | "
             << Util::formatTime(secsLeft).toStdString() << " "
-            << (!done ? "left" : "total") << " | "
-            << "chunk " << chunksFinished << " / " << chunksAmount;
+            << (!done ? "left" : "total");
   }
 
   sstream << " ]";
