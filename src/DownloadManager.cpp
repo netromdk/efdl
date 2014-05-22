@@ -194,10 +194,15 @@ void DownloadManager::updateProgress() {
     float perc = (long double)(bytesDown + offset) / (long double)size * 100.0;
 
     sstream << perc << "% | "
-            << Util::formatSize(bytesDown + offset, 1).toStdString() << " / "
+            << (!done
+                ? Util::formatSize(bytesDown + offset, 1).toStdString()+ " / "
+                : "")
             << Util::formatSize(size, 1).toStdString() << " @ "
             << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
-            << "chunk " << chunksFinished << " / " << chunksAmount << " | "
+            << (!done
+                ? QString("chunk %1 / %2").arg(chunksFinished).arg(chunksAmount).toStdString()
+                : QString("%1 chunks").arg(chunksAmount).toStdString())
+            << " | "
             << Util::formatTime(secsLeft).toStdString() << " "
             << (!done ? "left" : "total");
   }
@@ -230,7 +235,10 @@ void DownloadManager::updateProgress() {
       }
       sstream << "\n{ chunk #" << num << ": " << perc << "% ";
       if (total > 0) {
-        sstream << "| " << Util::formatSize(received, 1).toStdString() << " / "
+        sstream << "| "
+                << (!done
+                    ? Util::formatSize(received, 1).toStdString() + " / "
+                    : "")
                 << Util::formatSize(total, 1).toStdString() << " | "
                 << Util::formatTime(secsLeft).toStdString() << " "
                 << (!done ? "left" : "total") << " ";
