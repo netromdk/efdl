@@ -144,8 +144,7 @@ void DownloadManager::updateChunkMap() {
   bool rem = false;
   foreach (const auto &key, chunkMap.keys()) {
     const auto *chunk = chunkMap[key];
-    const auto &range = chunk->range;
-    if (range.first > 0 && range.first == range.second) {
+    if (chunk->isDone()) {
       rem = true;
       chunkMap.remove(key);
       delete chunk;
@@ -210,7 +209,7 @@ void DownloadManager::updateProgress() {
       auto *chunk = chunkMap[num];
       qint64 received = chunk->range.first, total = chunk->range.second;
 
-      bool done = (received > 0 && received == total);
+      bool done = chunk->isDone();
       if (done && chunk->ended.isNull()) {
         chunk->ended = now;
       }

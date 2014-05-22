@@ -20,6 +20,10 @@ public:
     : range{range}, started{started}
   { }
 
+  bool isDone() const {
+    return range.first > 0 && range.first == range.second;
+  }
+
   efdl::Range range;
   QDateTime started, ended;
 };
