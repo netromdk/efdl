@@ -175,7 +175,11 @@ void DownloadManager::updateProgress() {
   sstream.precision(1);
   sstream.setf(ios::fixed, ios::floatfield);
 
-  sstream << "[ ";
+  // Color escape codes.
+  static const string nw{"\033[0;37m"}, // normal, white
+    bw{"\033[1;37m"}; // bold, white
+
+  sstream << nw << "[ ";
 
   if (bytesDown == 0) {
     sstream << "Starting up download..";
@@ -193,17 +197,22 @@ void DownloadManager::updateProgress() {
 
     float perc = (long double)(bytesDown + offset) / (long double)size * 100.0;
 
-    sstream << perc << "% | "
+    sstream << bw << perc << "%" << nw << " | "
             << (!done
                 ? Util::formatSize(bytesDown + offset, 1).toStdString()+ " / "
                 : "")
             << Util::formatSize(size, 1).toStdString() << " @ "
-            << Util::formatSize(bytesPrSec, 1).toStdString() << "/s | "
+            << bw
+            << Util::formatSize(bytesPrSec, 1).toStdString() << "/s"
+            << nw
+            << " | "
             << (!done
                 ? QString("chunk %1 / %2").arg(chunksFinished).arg(chunksAmount).toStdString()
                 : QString("%1 chunks").arg(chunksAmount).toStdString())
             << " | "
+            << bw
             << Util::formatTime(secsLeft).toStdString() << " "
+            << nw
             << (!done ? "left" : "total");
   }
 
