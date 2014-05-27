@@ -6,6 +6,8 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 
+#include <signal.h>
+
 #include "Util.h"
 #include "Version.h"
 #include "Downloader.h"
@@ -13,10 +15,23 @@ using namespace efdl;
 
 #include "DownloadManager.h"
 
+void signalHandler(int sig) {
+  qDebug().nospace() << endl << "Closing down.. [sig=" << sig << "]";
+  QCoreApplication::exit(0);
+}
+
 int main(int argc, char **argv) {
   QCoreApplication app(argc, argv);
   QCoreApplication::setApplicationName("efdl");
   QCoreApplication::setApplicationVersion(versionString(false));
+
+  // Register signal handlers.
+  signal(SIGHUP, signalHandler);
+  signal(SIGINT, signalHandler);
+  signal(SIGTERM, signalHandler);
+#ifndef WIN32
+  signal(SIGKILL, signalHandler);
+#endif
 
   // Read possible URLs from STDIN.
   QString pipeIn;
