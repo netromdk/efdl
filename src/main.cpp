@@ -49,7 +49,13 @@ int main(int argc, char **argv) {
                                    "\n" +
                                    QObject::tr("Also note that piping URLs will "
                                                "make confirmations default to "
-                                               "'no', if any."));
+                                               "'no', if any.") +
+                                   "\n\n" +
+                                   QObject::tr("HTTP basic authorization is "
+                                               "supported either via --http-user"
+                                               " and --http-pass\nor by using "
+                                               "URLs on the form "
+                                               "'scheme://username:password@host.tld/path/'."));
   parser.addHelpOption();
   parser.addVersionOption();
   parser.addPositionalArgument("URLs", QObject::tr("URLs to download."), "URLs..");

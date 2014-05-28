@@ -35,11 +35,14 @@ uninstall`.
 Program usage
 ====
 ```
-Usage: efdl [options] URLs..
+Usage: ./bin/efdl [options] URLs..
 Efficient downloading application.
 
 If URLs are given through STDIN then the positional argument(s) are optional.
 Also note that piping URLs will make confirmations default to 'no', if any.
+
+HTTP basic authorization is supported either via --http-user and --http-pass
+or by using URLs on the form 'scheme://username:password@host.tld/path/'.
 
 Options:
   -h, --help            Displays this help.
@@ -56,6 +59,8 @@ Options:
                         be used with --chunk-size.
   --chunk-size <bytes>  Size of each chunk which dictates how many to use.
                         Cannot be used with --chunks.
+  --http-user <user>    Username for HTTP basic authorization.
+  --http-pass <pass>    Password for HTTP basic authorization.
   --show-conn-progress  Shows progress information for each connection.
   --show-http-headers   Shows all HTTP headers. Implies --verbose.
   --checksum <fmt>      Generate a checksum of the downloaded file using the
