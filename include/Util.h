@@ -16,6 +16,8 @@ namespace efdl {
     static QString formatTime(qint64 secs);
     static bool stringToHashAlg(QString str, QCryptographicHash::Algorithm &alg);
     static QString formatHeaders(const QList<QNetworkReply::RawHeaderPair> &hdrs);
+    static QByteArray createHttpAuthHeader(const QString &user,
+                                           const QString &pass);
   };
 }
 

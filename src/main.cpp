@@ -94,6 +94,16 @@ int main(int argc, char **argv) {
                                   QObject::tr("bytes"));
   parser.addOption(chunkSizeOpt);
 
+  QCommandLineOption httpUserOpt(QStringList{"http-user"},
+                                 QObject::tr("Username for HTTP basic authorization."),
+                                 QObject::tr("user"));
+  parser.addOption(httpUserOpt);
+
+  QCommandLineOption httpPassOpt(QStringList{"http-pass"},
+                                 QObject::tr("Password for HTTP basic authorization."),
+                                 QObject::tr("pass"));
+  parser.addOption(httpPassOpt);
+
   QCommandLineOption connProgOpt(QStringList{"show-conn-progress"},
                                  QObject::tr("Shows progress information for each "
                                              "connection."));
@@ -126,7 +136,7 @@ int main(int argc, char **argv) {
     resume{parser.isSet(resumeOpt)},
     connProg{parser.isSet(connProgOpt)},
     showHeaders{parser.isSet(showHeadersOpt)};
-  QString dir;
+  QString dir, httpUser, httpPass;
   bool chksum{false};
   QCryptographicHash::Algorithm hashAlg{QCryptographicHash::Sha3_512};
 
@@ -169,6 +179,21 @@ int main(int argc, char **argv) {
     return -1;
   }
 
+  if (parser.isSet(httpUserOpt)) {
+    httpUser = parser.value(httpUserOpt).trimmed();
+  }
+
+  if (parser.isSet(httpPassOpt)) {
+    httpPass = parser.value(httpPassOpt).trimmed();
+  }
+
+  if ((!httpUser.isEmpty() && httpPass.isEmpty()) ||
+      (httpUser.isEmpty() && !httpPass.isEmpty())) {
+    qCritical() << "ERROR You have to specify both username and password for"
+                << "HTTP auth!";
+    return -1;
+  }
+
   if (parser.isSet(chksumOpt)) {
     QString alg{parser.value(chksumOpt).trimmed().toLower()};
     chksum = true;
@@ -199,6 +224,8 @@ int main(int argc, char **argv) {
 
     auto *dl = new Downloader{url, dir, conns, chunks, chunkSize, confirm,
                               resume, verbose, showHeaders};
+    dl->setHttpCredentials(httpUser, httpPass);
+
     manager.add(dl);
   }
 

@@ -14,7 +14,9 @@ namespace efdl {
     Q_OBJECT
 
   public:
-    DownloadTask(const QUrl &url, Range range, int num);
+    DownloadTask(const QUrl &url, Range range, int num,
+                 const QString &httpUser = QString(),
+                 const QString &httpPass = QString());
 
   signals:
     void started(int num);
@@ -32,6 +34,7 @@ namespace efdl {
     const QUrl &url;
     Range range;
     int num;
+    const QString &httpUser, &httpPass;
   };
 }
 

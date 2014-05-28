@@ -29,6 +29,8 @@ namespace efdl {
                int chunkSize, bool confirm, bool resume, bool verbose,
                bool showHeaders);
 
+    void setHttpCredentials(const QString &user, const QString &pass);
+
     QUrl getUrl() const { return url; }
 
   signals:
@@ -64,7 +66,7 @@ namespace efdl {
     void saveChunk();
   
     QUrl url;
-    QString outputDir, outputPath;
+    QString outputDir, outputPath, httpUser, httpPass;
     int conns, chunks, chunkSize, downloadCount, rangeCount;
     qint64 contentLen, offset;
     bool confirm, resume, verbose, showHeaders, resumable;

@@ -3,14 +3,16 @@
 #include <QNetworkRequest>
 #include <QNetworkAccessManager>
 
+#include "Util.h"
 #include "DownloadTask.h"
 
 namespace efdl {
-  DownloadTask::DownloadTask(const QUrl &url, Range range, int num)
-    : url{url}, range{range}, num{num}
-{
-  setAutoDelete(true);
-}
+  DownloadTask::DownloadTask(const QUrl &url, Range range, int num,
+                             const QString &httpUser, const QString &httpPass)
+    : url{url}, range{range}, num{num}, httpUser{httpUser}, httpPass{httpPass}
+  {
+    setAutoDelete(true);
+  }
 
   void DownloadTask::onProgress(qint64 received, qint64 total) {
     emit progress(num, received, total);
@@ -24,6 +26,11 @@ namespace efdl {
     QNetworkRequest req{url};
     req.setRawHeader("Range", rangeHdr.toUtf8());
     req.setRawHeader("Accept-Encoding", "identity");
+
+    if (!httpUser.isEmpty() && !httpPass.isEmpty()) {
+      req.setRawHeader("Authorization",
+                       Util::createHttpAuthHeader(httpUser, httpPass));
+    }
 
     QNetworkAccessManager netmgr;
     auto *rep = netmgr.get(req);

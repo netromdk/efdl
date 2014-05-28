@@ -218,4 +218,9 @@ namespace efdl {
     }
     return res;
   }
+
+  QByteArray Util::createHttpAuthHeader(const QString &user,
+                                        const QString &pass) {
+    return "Basic " + (user + ":" + pass).toUtf8().toBase64();
+  }
 }

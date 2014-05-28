@@ -30,6 +30,12 @@ namespace efdl {
             Qt::QueuedConnection);
   }
 
+  void Downloader::setHttpCredentials(const QString &user,
+                                      const QString &pass) {
+    httpUser = user;
+    httpPass = pass;
+  }
+
   void Downloader::start() {
     // Fetch HEAD to find out the size but also if it exists.
     reply = getHead(url);
@@ -118,6 +124,11 @@ namespace efdl {
     QNetworkRequest req{url};
     req.setRawHeader("Accept-Encoding", "identity");
 
+    if (!httpUser.isEmpty() && !httpPass.isEmpty()) {
+      req.setRawHeader("Authorization",
+                       Util::createHttpAuthHeader(httpUser, httpPass));
+    }
+
     auto *rep = netmgr.head(req);
     QEventLoop loop;
     connect(rep, &QNetworkReply::finished, &loop, &QEventLoop::quit);
@@ -156,7 +167,7 @@ namespace efdl {
     }
 
     // Handle redirect.
-    if (code >= 300 && code < 400) {
+    else if (code >= 300 && code < 400) {
       if (!rep->hasRawHeader("Location")) {
         rep->abort();
         qCritical() << "ERROR Could not resolve URL!";
@@ -164,12 +175,11 @@ namespace efdl {
       }
 
       QString locHdr = QString::fromUtf8(rep->rawHeader("Location"));
-
-      QUrl loc{locHdr, QUrl::StrictMode};
+      QUrl loc{locHdr};
       if (!loc.isValid()) {
         rep->abort();
-        qCritical() << "ERROR Invalid redirection header:" <<
-          qPrintable(loc.toString(QUrl::FullyEncoded));
+        qCritical() << "ERROR Invalid redirection header:"
+                    << qPrintable(loc.toString(QUrl::FullyEncoded));
         return nullptr;
       }
 
@@ -315,7 +325,7 @@ namespace efdl {
     int num{1};
     while (!ranges.empty()) {
       auto range = ranges.dequeue();
-      auto *task = new DownloadTask{url, range, num++};
+      auto *task = new DownloadTask{url, range, num++, httpUser, httpPass};
       connect(task, SIGNAL(started(int)), SIGNAL(chunkStarted(int)));
       connect(task, SIGNAL(progress(int, qint64, qint64)),
               SIGNAL(chunkProgress(int, qint64, qint64)));
