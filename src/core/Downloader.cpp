@@ -112,7 +112,7 @@ namespace efdl {
 
   QNetworkReply *Downloader::getHead(const QUrl &url) {
     if (verbose) {
-      qDebug() << "HEAD" << qPrintable(url.toString());
+      qDebug() << "HEAD" << qPrintable(url.toString(QUrl::FullyEncoded));
     }
 
     QNetworkRequest req{url};
@@ -142,7 +142,8 @@ namespace efdl {
 
     if (code >= 200 && code < 300) {
       if (url != this->url) {
-        qDebug() << "Resolved to" << qPrintable(url.toString());
+        qDebug() << "Resolved to"
+                 << qPrintable(url.toString(QUrl::FullyEncoded));
       }
 
       if (confirm && didRedir) {
@@ -168,7 +169,7 @@ namespace efdl {
       if (!loc.isValid()) {
         rep->abort();
         qCritical() << "ERROR Invalid redirection header:" <<
-          qPrintable(loc.toString());
+          qPrintable(loc.toString(QUrl::FullyEncoded));
         return nullptr;
       }
 
@@ -178,7 +179,7 @@ namespace efdl {
       }
 
       if (verbose) {
-        qDebug() << "REDIRECT" << qPrintable(loc.toString());
+        qDebug() << "REDIRECT" << qPrintable(loc.toString(QUrl::FullyEncoded));
       }
 
       didRedir = true;

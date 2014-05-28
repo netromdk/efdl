@@ -61,7 +61,8 @@ void DownloadManager::next() {
   cleanup();
 
   downloader = queue.dequeue();
-  qDebug() << "Downloading" << qPrintable(downloader->getUrl().toString());
+  qDebug() << "Downloading"
+           << qPrintable(downloader->getUrl().toString(QUrl::FullyEncoded));
   connect(downloader, &Downloader::finished, this, &DownloadManager::next);
   connect(downloader, &Downloader::information,
           this, &DownloadManager::onInformation);
