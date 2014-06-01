@@ -60,7 +60,18 @@ namespace efdl {
       QCoreApplication::exit(-1);
       return;
     }
-    qDebug() << "File size" << qPrintable(Util::formatSize(contentLen, 1));
+
+    QString type;
+    if (reply->hasRawHeader("Content-Type")) {
+      type = reply->rawHeader("Content-Type");
+      int pos;
+      if ((pos = type.indexOf(";")) != -1) {
+        type = type.mid(0, pos);
+      }
+    }
+
+    qDebug() << "File size" << qPrintable(Util::formatSize(contentLen, 1))
+             << qPrintable(!type.isEmpty() ? "[" + type + "]" : "");
 
     // Check for header "Accept-Ranges" and whether it has "bytes"
     // supported.
