@@ -17,11 +17,11 @@
 namespace efdl {
   Downloader::Downloader(const QUrl &url, const QString &outputDir, int conns,
                          int chunks, int chunkSize, bool confirm, bool resume,
-                         bool verbose, bool showHeaders)
+                         bool verbose, bool dryRun, bool showHeaders)
     : url{url}, outputDir{outputDir}, conns{conns}, chunks{chunks},
     chunkSize{chunkSize}, downloadCount{0}, rangeCount{0}, contentLen{0},
     offset{0}, confirm{confirm}, resume{resume}, verbose{verbose},
-    showHeaders{showHeaders}, resumable{false}, reply{nullptr}
+    dryRun{dryRun}, showHeaders{showHeaders}, resumable{false}, reply{nullptr}
   {
     connect(&commitThread, &CommitThread::finished,
             this, &Downloader::onCommitThreadFinished);
@@ -83,6 +83,12 @@ namespace efdl {
     // Clean reply.
     reply->close();
     reply = nullptr;
+
+    // If performing a dry run then stop now.
+    if (dryRun) {
+      emit finished();
+      return;
+    }
 
     if (!setupFile()) {
       QCoreApplication::exit(-1);

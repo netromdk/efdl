@@ -87,6 +87,11 @@ int main(int argc, char **argv) {
                                 QObject::tr("Verbose mode."));
   parser.addOption(verboseOpt);
 
+  QCommandLineOption dryRunOpt(QStringList{"dry-run"},
+                               QObject::tr("Do not download anything just resolve"
+                                           " URLs and stop."));
+  parser.addOption(dryRunOpt);
+
   QCommandLineOption chunksOpt(QStringList{"chunks"},
                                QObject::tr("Number of chunks to split the download"
                                            "up into. Cannot be used with --chunk-size."),
@@ -139,6 +144,7 @@ int main(int argc, char **argv) {
   int conns{1}, chunks{-1}, chunkSize{-1};
   bool ok{false}, confirm{parser.isSet(confirmOpt)},
     verbose{parser.isSet(verboseOpt)},
+    dryRun{parser.isSet(dryRunOpt)},
     resume{parser.isSet(resumeOpt)},
     connProg{parser.isSet(connProgOpt)},
     showHeaders{parser.isSet(showHeadersOpt)};
@@ -209,7 +215,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  DownloadManager manager{connProg};
+  DownloadManager manager{dryRun, connProg};
   if (chksum) {
     manager.createChecksum(hashAlg);
   }
@@ -229,7 +235,7 @@ int main(int argc, char **argv) {
     }
 
     auto *dl = new Downloader{url, dir, conns, chunks, chunkSize, confirm,
-                              resume, verbose, showHeaders};
+                              resume, verbose, dryRun, showHeaders};
     dl->setHttpCredentials(httpUser, httpPass);
 
     manager.add(dl);

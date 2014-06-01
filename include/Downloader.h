@@ -27,7 +27,7 @@ namespace efdl {
   public:
     Downloader(const QUrl &url, const QString &outputDir, int conns, int chunks,
                int chunkSize, bool confirm, bool resume, bool verbose,
-               bool showHeaders);
+               bool dryRun, bool showHeaders);
 
     void setHttpCredentials(const QString &user, const QString &pass);
 
@@ -69,7 +69,7 @@ namespace efdl {
     QString outputDir, outputPath, httpUser, httpPass;
     int conns, chunks, chunkSize, downloadCount, rangeCount;
     qint64 contentLen, offset;
-    bool confirm, resume, verbose, showHeaders, resumable;
+    bool confirm, resume, verbose, dryRun, showHeaders, resumable;
 
     QNetworkAccessManager netmgr;
     QNetworkReply *reply;

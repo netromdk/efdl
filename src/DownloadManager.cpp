@@ -11,9 +11,9 @@
 #include "Downloader.h"
 using namespace efdl;
 
-DownloadManager::DownloadManager(bool connProg)
-  : connProg{connProg}, chksum{false}, conns{0}, chunksAmount{0},
-  chunksFinished{0}, size{0}, offset{0}, bytesDown{0},
+DownloadManager::DownloadManager(bool dryRun, bool connProg)
+  : dryRun{dryRun}, connProg{connProg}, chksum{false}, conns{0},
+  chunksAmount{0}, chunksFinished{0}, size{0}, offset{0}, bytesDown{0},
   hashAlg{QCryptographicHash::Sha3_512}, downloader{nullptr}
 { }
 
@@ -38,15 +38,17 @@ void DownloadManager::start() {
 void DownloadManager::next() {
   static bool first{true};
   if (!first) {
-    // Update progress with total download time with no connection
-    // lines.
-    bool tmp{connProg};
-    connProg = false;
-    lastProgress = QDateTime(); // Force update.
-    updateProgress();
-    connProg = tmp;
+    if (!dryRun) {
+      // Update progress with total download time with no connection
+      // lines.
+      bool tmp{connProg};
+      connProg = false;
+      lastProgress = QDateTime(); // Force update.
+      updateProgress();
+      connProg = tmp;
 
-    if (chksum) printChecksum();
+      if (chksum) printChecksum();
+    }
 
     // Separate each download with a newline.
     if (!queue.isEmpty()) qDebug();

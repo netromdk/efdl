@@ -32,7 +32,7 @@ class DownloadManager : public QObject {
   Q_OBJECT
   
 public:
-  DownloadManager(bool connProg);
+  DownloadManager(bool dryRun = false, bool connProg = false);
   ~DownloadManager();
 
   void add(efdl::Downloader *entry);
@@ -64,7 +64,7 @@ private:
 
   QQueue<efdl::Downloader*> queue;
 
-  bool connProg, chksum;
+  bool dryRun, connProg, chksum;
   QString outputPath;
   int conns, chunksAmount, chunksFinished;
   qint64 size, offset, bytesDown;
