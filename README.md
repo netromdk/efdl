@@ -55,6 +55,7 @@ Options:
   --confirm             Will ask to confirm to download on redirections or
                         whether to truncate a completed file when resuming.
   --verbose             Verbose mode.
+  --dry-run             Do not download anything just resolve URLs and stop.
   --chunks <num>        Number of chunks to split the downloadup into. Cannot
                         be used with --chunk-size.
   --chunk-size <bytes>  Size of each chunk which dictates how many to use.
