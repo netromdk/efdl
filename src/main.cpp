@@ -124,14 +124,15 @@ int main(int argc, char **argv) {
                                     QObject::tr("Shows all HTTP headers. Implies --verbose."));
   parser.addOption(showHeadersOpt);
 
-  QCommandLineOption chksumOpt(QStringList{"checksum"},
-                               QObject::tr("Generate a checksum of the downloaded "
-                                           "file using the given hash function. "
-                                           "Options are: md4, md5, sha1, sha2-224,"
-                                           " sha2-256, sha2-384, sha2-512, sha3-224,"
-                                           " sha3-256, sha3-384, sha3-512"),
-                               QObject::tr("fmt"));
-  parser.addOption(chksumOpt);
+  QCommandLineOption genChksumOpt(QStringList{"gen-checksum"},
+                                  QObject::tr("Generate a checksum of the "
+                                              "downloaded file using the given hash"
+                                              " function. Options are: md4, md5, "
+                                              "sha1, sha2-224, sha2-256, sha2-384, "
+                                              "sha2-512, sha3-224, sha3-256, "
+                                              "sha3-384, sha3-512"),
+                                  QObject::tr("fmt"));
+  parser.addOption(genChksumOpt);
 
   // Process CLI arguments.
   parser.process(app);
@@ -206,8 +207,8 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  if (parser.isSet(chksumOpt)) {
-    QString alg{parser.value(chksumOpt).trimmed().toLower()};
+  if (parser.isSet(genChksumOpt)) {
+    QString alg{parser.value(genChksumOpt).trimmed().toLower()};
     chksum = true;
     if (!Util::stringToHashAlg(alg, hashAlg)) {
       qCritical() << "ERROR Invalid hash function:" << qPrintable(alg);

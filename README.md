@@ -64,7 +64,7 @@ Options:
   --http-pass <pass>    Password for HTTP basic authorization.
   --show-conn-progress  Shows progress information for each connection.
   --show-http-headers   Shows all HTTP headers. Implies --verbose.
-  --checksum <fmt>      Generate a checksum of the downloaded file using the
+  --gen-checksum <fmt>  Generate a checksum of the downloaded file using the
                         given hash function. Options are: md4, md5, sha1,
                         sha2-224, sha2-256, sha2-384, sha2-512, sha3-224,
                         sha3-256, sha3-384, sha3-512
