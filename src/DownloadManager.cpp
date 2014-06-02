@@ -291,11 +291,12 @@ void DownloadManager::verifyIntegrity(const HashPair &pair) {
   QString hash{Util::hashFile(outputPath, pair.first)};
   if (hash.isEmpty()) return;
   if (hash == pair.second) {
-    qDebug() << "Verified:" << qPrintable(pair.second);
+    qDebug() << "\033[1;32mVerified:\033[0;37m" << qPrintable(pair.second);
   }
   else {
-    qDebug() << "Failed to verify:" << qPrintable(pair.second);
-    qDebug() << "Was:" << qPrintable(hash);
+    qDebug().nospace()
+      << "\033[1;31mFailed to verify:\033[0;37m " << qPrintable(pair.second)
+      << " (was " << qPrintable(hash) << ")";
   }
 }
 
