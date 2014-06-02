@@ -1,3 +1,4 @@
+#include <QFile>
 #include <QObject>
 #include <QTextStream>
 
@@ -222,5 +223,21 @@ namespace efdl {
   QByteArray Util::createHttpAuthHeader(const QString &user,
                                         const QString &pass) {
     return "Basic " + (user + ":" + pass).toUtf8().toBase64();
+  }
+
+  QByteArray Util::hashFile(const QString &path,
+                            const QCryptographicHash::Algorithm &alg) {
+    QCryptographicHash hasher{alg};
+    QFile file{path};
+    if (!file.open(QIODevice::ReadOnly)) {
+      qCritical() << "ERROR Checksum generation failed: could not open output"
+                  << "file for reading.";
+      return QByteArray();
+    }
+    if (!hasher.addData(&file)) {
+      qCritical() << "ERROR Failed to do checksum of file.";
+      return QByteArray();
+    }
+    return hasher.result().toHex();
   }
 }

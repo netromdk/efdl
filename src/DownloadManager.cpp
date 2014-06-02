@@ -26,6 +26,10 @@ void DownloadManager::add(Downloader *entry) {
   queue << entry;
 }
 
+void DownloadManager::setVerifcations(const QList<HashPair> &pairs) {
+  verifyList = pairs;
+}
+
 void DownloadManager::createChecksum(QCryptographicHash::Algorithm hashAlg) {
   this->hashAlg = hashAlg;
   chksum = true;
@@ -46,6 +50,10 @@ void DownloadManager::next() {
       lastProgress = QDateTime(); // Force update.
       updateProgress();
       connProg = tmp;
+
+      if (!verifyList.isEmpty()) {
+        verifyIntegrity(verifyList.takeFirst());
+      }
 
       if (chksum) printChecksum();
     }
@@ -279,17 +287,20 @@ void DownloadManager::updateProgress() {
   lastLines = QString(msg.c_str()).split("\n").size() - 1;
 }
 
+void DownloadManager::verifyIntegrity(const HashPair &pair) {
+  QString hash{Util::hashFile(outputPath, pair.first)};
+  if (hash.isEmpty()) return;
+  if (hash == pair.second) {
+    qDebug() << "Verified:" << qPrintable(pair.second);
+  }
+  else {
+    qDebug() << "Failed to verify:" << qPrintable(pair.second);
+    qDebug() << "Was:" << qPrintable(hash);
+  }
+}
+
 void DownloadManager::printChecksum() {
-  QCryptographicHash hasher{hashAlg};
-  QFile file{outputPath};
-  if (!file.open(QIODevice::ReadOnly)) {
-    qCritical() << "ERROR Checksum generation failed: could not open output"
-                << "file for reading.";
-     return;
-  }
-  if (!hasher.addData(&file)) {
-    qCritical() << "ERROR Failed to do checksum of file.";
-     return;
-  }
-  qDebug() << "Checksum:" << qPrintable(hasher.result().toHex());
+  QByteArray hash{Util::hashFile(outputPath, hashAlg)};
+  if (hash.isEmpty()) return;
+  qDebug() << "Checksum:" << qPrintable(hash);
 }

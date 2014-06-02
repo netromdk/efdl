@@ -45,29 +45,33 @@ HTTP basic authorization is supported either via --http-user and --http-pass
 or by using URLs on the form 'scheme://username:password@host.tld/path/'.
 
 Options:
-  -h, --help            Displays this help.
-  -v, --version         Displays version information.
-  -o, --output <dir>    Where to save file. (defaults to current directory)
-  -c, --conns <num>     Number of simultaneous connections to use. (defaults to
-                        1)
-  -r, --resume          Resume download if file is present locally and the
-                        server supports it.
-  --confirm             Will ask to confirm to download on redirections or
-                        whether to truncate a completed file when resuming.
-  --verbose             Verbose mode.
-  --dry-run             Do not download anything just resolve URLs and stop.
-  --chunks <num>        Number of chunks to split the downloadup into. Cannot
-                        be used with --chunk-size.
-  --chunk-size <bytes>  Size of each chunk which dictates how many to use.
-                        Cannot be used with --chunks.
-  --http-user <user>    Username for HTTP basic authorization.
-  --http-pass <pass>    Password for HTTP basic authorization.
-  --show-conn-progress  Shows progress information for each connection.
-  --show-http-headers   Shows all HTTP headers. Implies --verbose.
-  --gen-checksum <fmt>  Generate a checksum of the downloaded file using the
-                        given hash function. Options are: md4, md5, sha1,
-                        sha2-224, sha2-256, sha2-384, sha2-512, sha3-224,
-                        sha3-256, sha3-384, sha3-512
+  -h, --help               Displays this help.
+  -v, --version            Displays version information.
+  -o, --output <dir>       Where to save file. (defaults to current directory)
+  -c, --conns <num>        Number of simultaneous connections to use. (defaults
+                           to 1)
+  -r, --resume             Resume download if file is present locally and the
+                           server supports it.
+  --confirm                Will ask to confirm to download on redirections or
+                           whether to truncate a completed file when resuming.
+  --verbose                Verbose mode.
+  --dry-run                Do not download anything just resolve URLs and stop.
+  --chunks <num>           Number of chunks to split the downloadup into.
+                           Cannot be used with --chunk-size.
+  --chunk-size <bytes>     Size of each chunk which dictates how many to use.
+                           Cannot be used with --chunks.
+  --http-user <user>       Username for HTTP basic authorization.
+  --http-pass <pass>       Password for HTTP basic authorization.
+  --show-conn-progress     Shows progress information for each connection.
+  --show-http-headers      Shows all HTTP headers. Implies --verbose.
+  --verify <fmt=hash, ..>  Verify the integrity of the downloaded file(s) using
+                           the given hash function and value. Hash functions
+                           supported: md4, md5, sha1, sha2-224, sha2-256,
+                           sha2-384, sha2-512, sha3-224, sha3-256, sha3-384,
+                           sha3-512
+  --gen-checksum <fmt>     Generate a checksum of the downloaded file using the
+                           given hash function. See --verify for supported hash
+                           functions.
 
 Arguments:
   URLs                  URLs to download.

@@ -50,7 +50,7 @@ namespace efdl {
     void chunkProgress(int num, qint64 received, qint64 total);
     void chunkFinished(int num, Range range);
     void chunkFailed(int num, Range range, int httpCode,
-                    QNetworkReply::NetworkError error);
+                     QNetworkReply::NetworkError error);
 
     // Internal signal.
     void chunkToThread(const QByteArray *data, bool last);

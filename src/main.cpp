@@ -124,13 +124,22 @@ int main(int argc, char **argv) {
                                     QObject::tr("Shows all HTTP headers. Implies --verbose."));
   parser.addOption(showHeadersOpt);
 
+  QCommandLineOption verifyOpt(QStringList{"verify"},
+                               QObject::tr("Verify the integrity of the "
+                                           "downloaded file(s) using the given "
+                                           "hash function and value. Hash "
+                                           "functions supported: md4, md5, sha1,"
+                                           " sha2-224, sha2-256, sha2-384, "
+                                           "sha2-512, sha3-224, sha3-256, "
+                                           "sha3-384, sha3-512"),
+                               QObject::tr("fmt=hash, .."));
+  parser.addOption(verifyOpt);
+
   QCommandLineOption genChksumOpt(QStringList{"gen-checksum"},
                                   QObject::tr("Generate a checksum of the "
-                                              "downloaded file using the given hash"
-                                              " function. Options are: md4, md5, "
-                                              "sha1, sha2-224, sha2-256, sha2-384, "
-                                              "sha2-512, sha3-224, sha3-256, "
-                                              "sha3-384, sha3-512"),
+                                              "downloaded file using the given "
+                                              "hash function. See --verify for "
+                                              "supported hash functions."),
                                   QObject::tr("fmt"));
   parser.addOption(genChksumOpt);
 
@@ -152,6 +161,7 @@ int main(int argc, char **argv) {
   QString dir, httpUser, httpPass;
   bool chksum{false};
   QCryptographicHash::Algorithm hashAlg{QCryptographicHash::Sha3_512};
+  QList<HashPair> verifyList;
 
   if (showHeaders) verbose = true;
 
@@ -207,6 +217,24 @@ int main(int argc, char **argv) {
     return -1;
   }
 
+  if (parser.isSet(verifyOpt)) {
+    const QString pairs{parser.value(verifyOpt).trimmed().toLower()};
+    foreach (const QString &pair, pairs.split(",", QString::SkipEmptyParts)) {
+      const QStringList elms = pair.split("=");
+      if (elms.size() != 2) continue;
+      QCryptographicHash::Algorithm alg;
+      if (!Util::stringToHashAlg(elms[0], alg)) {
+        qCritical() << "ERROR Invalid hash function:" << qPrintable(elms[0]);
+        return -1;
+      }
+      verifyList << HashPair{alg, elms[1]};
+    }
+    if (verifyList.size() != args.size()) {
+      qCritical() << "ERROR You have to specify as many pairs as there are URLs!";
+      return -1;
+    }
+  }
+
   if (parser.isSet(genChksumOpt)) {
     QString alg{parser.value(genChksumOpt).trimmed().toLower()};
     chksum = true;
@@ -217,6 +245,7 @@ int main(int argc, char **argv) {
   }
 
   DownloadManager manager{dryRun, connProg};
+  manager.setVerifcations(verifyList);
   if (chksum) {
     manager.createChecksum(hashAlg);
   }

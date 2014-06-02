@@ -28,6 +28,8 @@ public:
   QDateTime started, ended;
 };
 
+typedef QPair<QCryptographicHash::Algorithm, QString> HashPair;
+
 class DownloadManager : public QObject {
   Q_OBJECT
   
@@ -37,6 +39,7 @@ public:
 
   void add(efdl::Downloader *entry);
 
+  void setVerifcations(const QList<HashPair> &pairs);
   void createChecksum(QCryptographicHash::Algorithm hashAlg);
 
 signals:
@@ -60,6 +63,7 @@ private:
   void cleanup();
   void updateChunkMap();
   void updateProgress();
+  void verifyIntegrity(const HashPair &pair);
   void printChecksum();
 
   QQueue<efdl::Downloader*> queue;
@@ -69,6 +73,7 @@ private:
   int conns, chunksAmount, chunksFinished;
   qint64 size, offset, bytesDown;
   QDateTime started, lastProgress;
+  QList<HashPair> verifyList;
   QCryptographicHash::Algorithm hashAlg;
   efdl::Downloader *downloader;
   QMutex chunkMutex;

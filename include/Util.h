@@ -18,6 +18,8 @@ namespace efdl {
     static QString formatHeaders(const QList<QNetworkReply::RawHeaderPair> &hdrs);
     static QByteArray createHttpAuthHeader(const QString &user,
                                            const QString &pass);
+    static QByteArray hashFile(const QString &path,
+                               const QCryptographicHash::Algorithm &alg);
   };
 }
 
