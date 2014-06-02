@@ -234,8 +234,16 @@ int main(int argc, char **argv) {
       return -1;
     }
 
-    auto *dl = new Downloader{url, dir, conns, chunks, chunkSize, confirm,
-                              resume, verbose, dryRun, showHeaders};
+    auto *dl = new Downloader{url};
+    dl->setOutputDir(dir);
+    dl->setConnections(conns);
+    dl->setChunks(chunks);
+    dl->setChunkSize(chunkSize);
+    dl->setConfirm(confirm);
+    dl->setResume(resume);
+    dl->setVerbose(verbose);
+    dl->setDryRun(dryRun);
+    dl->setShowHeaders(showHeaders);
     dl->setHttpCredentials(httpUser, httpPass);
 
     manager.add(dl);

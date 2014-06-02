@@ -25,13 +25,20 @@ namespace efdl {
     Q_OBJECT
   
   public:
-    Downloader(const QUrl &url, const QString &outputDir, int conns, int chunks,
-               int chunkSize, bool confirm, bool resume, bool verbose,
-               bool dryRun, bool showHeaders);
-
-    void setHttpCredentials(const QString &user, const QString &pass);
+    Downloader(const QUrl &url);
 
     QUrl getUrl() const { return url; }
+
+    void setOutputDir(const QString &outputDir) { this->outputDir = outputDir; }
+    void setConnections(int conns) { this->conns = conns; }
+    void setChunks(int chunks) { this->chunks = chunks; }
+    void setChunkSize(int size) { this->chunkSize = size; }
+    void setConfirm(bool confirm) { this->confirm = confirm; }
+    void setResume(bool resume) { this->resume = resume; }
+    void setVerbose(bool verbose) { this->verbose = verbose; }
+    void setDryRun(bool dryRun) { this->dryRun = dryRun; }
+    void setShowHeaders(bool show) { this->showHeaders = show; }
+    void setHttpCredentials(const QString &user, const QString &pass);
 
   signals:
     void finished();
