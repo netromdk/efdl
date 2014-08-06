@@ -59,6 +59,19 @@ namespace efdl {
       return;
     }
 
+    // Check if the total is different than the Content-Length and, if
+    // so, then change to that number.
+    if (reply->hasRawHeader("Content-Range")) {
+      QString range = QString::fromUtf8(reply->rawHeader("Content-Range"));
+      QStringList elms = range.split("/", QString::SkipEmptyParts);
+      if (elms.size() == 2) {
+        qint64 tot = elms[1].toLongLong(&ok);
+        if (ok && tot > 0 && tot != contentLen) {
+          contentLen = tot;
+        }
+      }
+    }
+
     QString type;
     if (reply->hasRawHeader("Content-Type")) {
       type = reply->rawHeader("Content-Type");
@@ -136,7 +149,12 @@ namespace efdl {
       qDebug() << "HEAD" << qPrintable(url.toString(QUrl::FullyEncoded));
     }
 
+    // Emulating a HEAD by doing a GET which only retrieves range
+    // 0-0. This is necessary because some sites return different
+    // headers for HEAD/GET even though they should be the same!
+
     QNetworkRequest req{url};
+    req.setRawHeader("Range", QString("bytes=0-0").toUtf8());
     req.setRawHeader("Accept-Encoding", "identity");
 
     if (!httpUser.isEmpty() && !httpPass.isEmpty()) {
@@ -144,7 +162,9 @@ namespace efdl {
                        Util::createHttpAuthHeader(httpUser, httpPass));
     }
 
-    auto *rep = netmgr.head(req);
+    //auto *rep = netmgr.head(req);
+    auto *rep = netmgr.get(req);
+
     QEventLoop loop;
     connect(rep, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
