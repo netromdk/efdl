@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
 
   QCommandLineOption chunksOpt(QStringList{"chunks"},
                                QObject::tr("Number of chunks to split the download"
-                                           "up into. Cannot be used with --chunk-size."),
+                                           " up into. Cannot be used with --chunk-size."),
                                QObject::tr("num"));
   parser.addOption(chunksOpt);
 

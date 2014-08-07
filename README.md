@@ -35,7 +35,7 @@ uninstall`.
 Program usage
 ====
 ```
-Usage: ./bin/efdl [options] URLs..
+Usage: efdl [options] URLs..
 Efficient downloading application.
 
 If URLs are given through STDIN then the positional argument(s) are optional.
@@ -56,7 +56,7 @@ Options:
                            whether to truncate a completed file when resuming.
   --verbose                Verbose mode.
   --dry-run                Do not download anything just resolve URLs and stop.
-  --chunks <num>           Number of chunks to split the downloadup into.
+  --chunks <num>           Number of chunks to split the download up into.
                            Cannot be used with --chunk-size.
   --chunk-size <bytes>     Size of each chunk which dictates how many to use.
                            Cannot be used with --chunks.
