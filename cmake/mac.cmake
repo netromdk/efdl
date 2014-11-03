@@ -5,7 +5,7 @@ SET(DEV_SDK2 "/Developer/SDKs/MacOSX${SDK}.sdk")
 
 IF (NOT EXISTS "${DEV_SDK}" AND NOT IS_DIRECTORY "${DEV_SDK}")
   IF (NOT EXISTS "${DEV_SDK2}" AND NOT IS_DIRECTORY "${DEV_SDK2}")
-    MESSAGE("Could not find Mac OSX SDK at: ${DEV_SDK}")
+    MESSAGE("Could not find Mac OSX SDK at: ${DEV_SDK} or ${DEV_SDK2}")
     MESSAGE("Aborting!")
     RETURN()
   ELSE()
