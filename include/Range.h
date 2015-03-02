@@ -4,15 +4,19 @@
 #include <QPair>
 #include <QDebug>
 
-namespace efdl {
-  /**
-   * Encapsulates a file data range of the form [start, end[
-   *
-   * Note that "end" is not inclusive!
-   */
-  typedef QPair<qint64, qint64> Range;
-}
+#include "EfdlGlobal.h"
 
-QDebug operator<<(QDebug dbg, const efdl::Range &r);
+BEGIN_NAMESPACE
+
+/**
+ * Encapsulates a file data range of the form [start, end[
+ *
+ * Note that "end" is not inclusive!
+ */
+typedef QPair<qint64, qint64> Range;
+
+END_NAMESPACE
+
+QDebug operator<<(QDebug dbg, const EFDL_NAMESPACE::Range &r);
 
 #endif // EFDL_RANGE_H

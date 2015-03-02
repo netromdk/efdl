@@ -6,36 +6,39 @@
 #include <QNetworkReply>
 
 #include "Range.h"
+#include "EfdlGlobal.h"
 
 class QUrl;
 
-namespace efdl {
-  class DownloadTask : public QObject, public QRunnable {
-    Q_OBJECT
+BEGIN_NAMESPACE
 
-  public:
-    DownloadTask(const QUrl &url, Range range, int num,
-                 const QString &httpUser = QString(),
-                 const QString &httpPass = QString());
+class DownloadTask : public QObject, public QRunnable {
+  Q_OBJECT
 
-  signals:
-    void started(int num);
-    void progress(int num, qint64 received, qint64 total);
-    void finished(int num, Range range, QByteArray *data);
-    void failed(int num, Range range, int httpCode,
-                QNetworkReply::NetworkError error);
+public:
+  DownloadTask(const QUrl &url, Range range, int num,
+               const QString &httpUser = QString(),
+               const QString &httpPass = QString());
 
-  private slots:
-    void onProgress(qint64 received, qint64 total);
+signals:
+  void started(int num);
+  void progress(int num, qint64 received, qint64 total);
+  void finished(int num, Range range, QByteArray *data);
+  void failed(int num, Range range, int httpCode,
+              QNetworkReply::NetworkError error);
 
-  private:
-    void run() override;
+private slots:
+  void onProgress(qint64 received, qint64 total);
 
-    const QUrl &url;
-    Range range;
-    int num;
-    const QString &httpUser, &httpPass;
-  };
-}
+private:
+  void run() override;
+
+  const QUrl &url;
+  Range range;
+  int num;
+  const QString &httpUser, &httpPass;
+};
+
+END_NAMESPACE
 
 #endif // EFDL_DOWNLOAD_TASK_H

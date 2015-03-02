@@ -2,58 +2,60 @@
 
 #include "CommitThread.h"
 
-namespace efdl {
-  CommitThread::CommitThread() : file{nullptr}, last{false} { }
+BEGIN_NAMESPACE
 
-  CommitThread::~CommitThread() {
-    cleanup();
-  }
+CommitThread::CommitThread() : file{nullptr}, last{false} { }
 
-  void CommitThread::enqueueChunk(const QByteArray *data, bool last) {
-    QMutexLocker locker(&queueMutex);
-    this->last = last;
-    queue.enqueue(data);
-  }
+CommitThread::~CommitThread() {
+  cleanup();
+}
 
-  void CommitThread::run() {
-    for (;;) {
-      const QByteArray *data{nullptr};
-      int amountLeft = 0;
-      {
-        QMutexLocker locker(&queueMutex);
-        if (!queue.isEmpty()) {
-          data = queue.dequeue();
-        }
-        amountLeft = queue.size();
+void CommitThread::enqueueChunk(const QByteArray *data, bool last) {
+  QMutexLocker locker(&queueMutex);
+  this->last = last;
+  queue.enqueue(data);
+}
+
+void CommitThread::run() {
+  for (;;) {
+    const QByteArray *data{nullptr};
+    int amountLeft = 0;
+    {
+      QMutexLocker locker(&queueMutex);
+      if (!queue.isEmpty()) {
+        data = queue.dequeue();
       }
-      if (!data) {
-        msleep(10);
-        continue;
-      }
-
-      qint64 wrote;
-      if ((wrote = file->write(*data)) != data->size()) {
-        qCritical() << "ERROR Could not write the entire data:"
-                    << wrote << "of" << data->size();
-        // TODO: handle this in a different way!
-        return;
-      }
-      delete data;
-
-      if (last && amountLeft == 0) {
-        break;
-      }
+      amountLeft = queue.size();
+    }
+    if (!data) {
       msleep(10);
+      continue;
     }
 
-    cleanup();
+    qint64 wrote;
+    if ((wrote = file->write(*data)) != data->size()) {
+      qCritical() << "ERROR Could not write the entire data:"
+                  << wrote << "of" << data->size();
+      // TODO: handle this in a different way!
+      return;
+    }
+    delete data;
+
+    if (last && amountLeft == 0) {
+      break;
+    }
+    msleep(10);
   }
 
-  void CommitThread::cleanup() {
-    if (file) {
-      file->close();
-      delete file;
-      file = nullptr;
-    }
+  cleanup();
+}
+
+void CommitThread::cleanup() {
+  if (file) {
+    file->close();
+    delete file;
+    file = nullptr;
   }
 }
+
+END_NAMESPACE

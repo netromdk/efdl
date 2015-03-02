@@ -11,7 +11,7 @@
 #include "Util.h"
 #include "Version.h"
 #include "Downloader.h"
-using namespace efdl;
+USE_NAMESPACE
 
 #include "DownloadManager.h"
 

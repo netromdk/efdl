@@ -9,7 +9,7 @@
 
 #include "Util.h"
 #include "Downloader.h"
-using namespace efdl;
+USE_NAMESPACE
 
 DownloadManager::DownloadManager(bool dryRun, bool connProg)
   : dryRun{dryRun}, connProg{connProg}, chksum{false}, conns{0},
