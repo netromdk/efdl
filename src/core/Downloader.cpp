@@ -21,13 +21,13 @@ Downloader::Downloader(const QUrl &url)
     rangeCount{0}, contentLen{0}, offset{0}, confirm{false}, resume{false},
     verbose{false}, dryRun{false}, showHeaders{false}, resumable{false},
     reply{nullptr}
-  {
-    connect(&commitThread, &CommitThread::finished,
-            this, &Downloader::onCommitThreadFinished);
-    connect(this, &Downloader::chunkToThread,
-            &commitThread, &CommitThread::enqueueChunk,
-            Qt::QueuedConnection);
-  }
+{
+  connect(&commitThread, &CommitThread::finished,
+          this, &Downloader::onCommitThreadFinished);
+  connect(this, &Downloader::chunkToThread,
+          &commitThread, &CommitThread::enqueueChunk,
+          Qt::QueuedConnection);
+}
 
 void Downloader::setHttpCredentials(const QString &user,
                                     const QString &pass) {
@@ -125,6 +125,10 @@ void Downloader::start() {
 
   // Start actual download.
   download();
+}
+
+void Downloader::stop() {
+  pool.stop();
 }
 
 void Downloader::onDownloadTaskFinished(int num, Range range, QByteArray *data) {

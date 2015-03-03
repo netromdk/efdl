@@ -23,6 +23,10 @@ void CommitThread::run() {
     {
       QMutexLocker locker(&queueMutex);
       if (!queue.isEmpty()) {
+        qDebug() << "TOP:" << queue.head();
+        if (queue.head()) {
+          qDebug() << "value:" << queue.head()->size();
+        }
         data = queue.dequeue();
       }
       amountLeft = queue.size();

@@ -88,6 +88,7 @@ void DownloadManager::next() {
 
   started = QDateTime::currentDateTime();
 }
+
 void DownloadManager::onInformation(const QString &outputPath, qint64 size,
                                     int chunksAmount, int conns,
                                     qint64 offset) {
@@ -131,20 +132,24 @@ void DownloadManager::onChunkFailed(int num, Range range, int httpCode,
   qCritical() << "Aborting..";
 
   cleanup();
-  QCoreApplication::exit(-1);
+  //  QCoreApplication::exit(-1);
 }
 
 void DownloadManager::cleanup() {
+  if (downloader) {
+    downloader->stop();
+    //downloader->disconnect();
+    downloader->deleteLater();
+    downloader = nullptr;
+  }
+
+  // TODO: Don't do the rest here before all threads have stopped!
+  /*
   chunksAmount = chunksFinished = size = offset = bytesDown = 0;
 
   qDeleteAll(chunkMap);
   chunkMap.clear();
-
-  if (downloader) {
-    downloader->disconnect();
-    downloader->deleteLater();
-    downloader = nullptr;
-  }
+  */
 }
 
 void DownloadManager::updateChunkMap() {

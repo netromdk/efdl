@@ -16,6 +16,9 @@ ADD_LIBRARY(
 
   ../../include/CommitThread.h
   CommitThread.cpp
+
+  ../../include/ThreadPool.h
+  ThreadPool.cpp
   )
 
 QT5_USE_MODULES(${LIB_NAME} Core Network)

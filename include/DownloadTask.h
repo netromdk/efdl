@@ -27,6 +27,9 @@ signals:
   void failed(int num, Range range, int httpCode,
               QNetworkReply::NetworkError error);
 
+public slots:
+  void start();
+
 private slots:
   void onProgress(qint64 received, qint64 total);
 

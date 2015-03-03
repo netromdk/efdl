@@ -16,6 +16,7 @@
 
 #include "Range.h"
 #include "EfdlGlobal.h"
+#include "ThreadPool.h"
 #include "CommitThread.h"
 
 class QUrl;
@@ -59,6 +60,7 @@ signals:
     
 public slots:
   void start();
+  void stop();
 
 private slots:
   void onDownloadTaskFinished(int num, Range range, QByteArray *data);
@@ -86,7 +88,7 @@ private:
   QMutex finishedMutex;
 
   QQueue<Range> ranges;
-  QThreadPool pool;
+  ThreadPool pool;
   QMap<qint64, QByteArray*> chunksMap; // range start -> data pointer
   CommitThread commitThread;
 };

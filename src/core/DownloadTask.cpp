@@ -11,9 +11,13 @@ BEGIN_NAMESPACE
 DownloadTask::DownloadTask(const QUrl &url, Range range, int num,
                            const QString &httpUser, const QString &httpPass)
   : url{url}, range{range}, num{num}, httpUser{httpUser}, httpPass{httpPass}
-  {
-    setAutoDelete(true);
-  }
+{
+  //setAutoDelete(true);
+}
+
+void DownloadTask::start() {
+  run();
+}
 
 void DownloadTask::onProgress(qint64 received, qint64 total) {
   emit progress(num, received, total);
