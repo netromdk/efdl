@@ -5,7 +5,6 @@
 #include <QMutex>
 #include <QQueue>
 #include <QObject>
-#include <QThread>
 
 #include "EfdlGlobal.h"
 
@@ -14,19 +13,6 @@ class QThread;
 BEGIN_NAMESPACE
 
 class DownloadTask;
-
-class TaskThread : public QThread {
-  Q_OBJECT
-
-public:
-  TaskThread(DownloadTask *task);
-
-protected:
-  virtual void run();
-
-private:
-  DownloadTask *task;
-};
 
 class ThreadPool : public QObject {
   Q_OBJECT
@@ -49,7 +35,7 @@ private:
   
   int maxCount;
   QQueue<DownloadTask*> tasks;
-  QList<QThread*> running;
+  QList<DownloadTask*> running;
   QMutex taskMutex, runMutex;
 };
 

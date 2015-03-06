@@ -1,8 +1,8 @@
 #ifndef EFDL_DOWNLOAD_TASK_H
 #define EFDL_DOWNLOAD_TASK_H
 
-#include <QObject>
-#include <QRunnable>
+#include <QTimer>
+#include <QThread>
 #include <QNetworkReply>
 
 #include "Range.h"
@@ -12,7 +12,7 @@ class QUrl;
 
 BEGIN_NAMESPACE
 
-class DownloadTask : public QObject, public QRunnable {
+class DownloadTask : public QThread {
   Q_OBJECT
 
 public:
@@ -27,15 +27,13 @@ signals:
   void failed(int num, Range range, int httpCode,
               QNetworkReply::NetworkError error);
 
-public slots:
-  void start();
+protected:
+  void run();
 
 private slots:
   void onProgress(qint64 received, qint64 total);
 
 private:
-  void run() override;
-
   const QUrl &url;
   Range range;
   int num;

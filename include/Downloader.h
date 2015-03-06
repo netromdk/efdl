@@ -11,8 +11,8 @@
 #include <QByteArray>
 #include <QThreadPool>
 #include <QNetworkReply>
-#include <QNetworkAccessManager>
 #include <QCryptographicHash>
+#include <QNetworkAccessManager>
 
 #include "Range.h"
 #include "EfdlGlobal.h"
@@ -26,7 +26,7 @@ BEGIN_NAMESPACE
 
 class Downloader : public QObject {
   Q_OBJECT
-  
+
 public:
   Downloader(const QUrl &url);
 

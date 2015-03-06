@@ -6,15 +6,6 @@
 
 BEGIN_NAMESPACE
 
-TaskThread::TaskThread(DownloadTask *task) : task(task) {
-}
-
-void TaskThread::run() {
-  qDebug() << "TASK THREAD: running task=" << task;
-  task->start();
-  qDebug() << "TASK THREAD: finished task=" << task;
-}
-
 ThreadPool::ThreadPool() : maxCount(1) {
   
 }
@@ -32,8 +23,6 @@ void ThreadPool::start(DownloadTask *task) {
 }
 
 void ThreadPool::stop() {
-  qDebug() << "POOL: stopping!";
-
   {
     QMutexLocker locker(&taskMutex);
     tasks.clear();
@@ -41,36 +30,34 @@ void ThreadPool::stop() {
 
   {
     QMutexLocker locker(&runMutex);
-    foreach (auto *thread, running) {
-      thread->requestInterruption();
-      thread->deleteLater();
+    foreach (auto *task, running) {
+      task->requestInterruption();
+    }
+    foreach (auto *task, running) {
+      if (task->isRunning()) {
+        task->wait();
+      }
+      task->deleteLater();
     }
     running.clear();
   }
 }
 
 void ThreadPool::onTaskFinished() {
-  auto *thread = qobject_cast<TaskThread*>(sender());
-  if (!thread) return;
+  auto *task = qobject_cast<DownloadTask*>(sender());
+  if (!task) return;
 
-  qDebug() << "onTaskFinished:" << thread;
   {
     QMutexLocker locker(&runMutex);
-    running.removeAll(thread);
+    running.removeAll(task);
   }
   startTask();
 }
 
 void ThreadPool::startTask() {
-  // 1. Take task from queue, if any (lock queue)
-  // 2. Create thread for the task and connect finished/error signals locally
-  // 3. Add to "running" list
-  // 4. Start thread
-
   {
     QMutexLocker locker(&runMutex);
     if (running.size() >= maxCount) {
-      qDebug() << "POOL: have max running tasks:" << running.size();
       return;
     }
   }
@@ -82,19 +69,14 @@ void ThreadPool::startTask() {
       task = tasks.dequeue();
     }
   }
-  if (!task) {
-    qDebug() << "POOL: no more tasks";
-    return;
-  }
+  if (!task) return;
 
   {
     QMutexLocker locker(&runMutex);
-    auto *thread = new TaskThread(task);
-    connect(thread, &QThread::finished, this, &ThreadPool::onTaskFinished);
-    running << thread;
-    qDebug() << "POOL: starting task=" << task << "on thread=" << thread;
-    thread->start();
+    connect(task, &QThread::finished, this, &ThreadPool::onTaskFinished);
+    running << task;
   }
+  task->start();
 }
 
 END_NAMESPACE

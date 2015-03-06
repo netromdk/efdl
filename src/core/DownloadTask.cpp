@@ -1,6 +1,7 @@
 #include <QUrl>
 #include <QEventLoop>
 #include <QNetworkRequest>
+#include <QCoreApplication>
 #include <QNetworkAccessManager>
 
 #include "Util.h"
@@ -11,13 +12,7 @@ BEGIN_NAMESPACE
 DownloadTask::DownloadTask(const QUrl &url, Range range, int num,
                            const QString &httpUser, const QString &httpPass)
   : url{url}, range{range}, num{num}, httpUser{httpUser}, httpPass{httpPass}
-{
-  //setAutoDelete(true);
-}
-
-void DownloadTask::start() {
-  run();
-}
+{ }
 
 void DownloadTask::onProgress(qint64 received, qint64 total) {
   emit progress(num, received, total);
@@ -43,10 +38,26 @@ void DownloadTask::run() {
 
   connect(rep, &QNetworkReply::downloadProgress,
           this, &DownloadTask::onProgress);
-  
-  QEventLoop loop;
-  QObject::connect(rep, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-  loop.exec();
+
+  QDateTime lastTime{QDateTime::currentDateTime()};
+  for (;;) {
+    // Only check for interrupt every half second.
+    QDateTime now{QDateTime::currentDateTime()};
+    if (lastTime.msecsTo(now) > 500) {
+      if (isInterruptionRequested()) {
+        rep->abort();
+        return;
+      }
+      lastTime = now;
+    }
+
+    if (rep->isFinished()) {
+      break;
+    }
+
+    QCoreApplication::processEvents();
+    msleep(10);
+  }
 
   int code = rep->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   //qDebug() << "CODE" << code;

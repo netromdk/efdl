@@ -137,19 +137,15 @@ void DownloadManager::onChunkFailed(int num, Range range, int httpCode,
 
 void DownloadManager::cleanup() {
   if (downloader) {
-    downloader->stop();
-    //downloader->disconnect();
+    downloader->stop(); // waits
     downloader->deleteLater();
     downloader = nullptr;
   }
 
-  // TODO: Don't do the rest here before all threads have stopped!
-  /*
   chunksAmount = chunksFinished = size = offset = bytesDown = 0;
 
   qDeleteAll(chunkMap);
   chunkMap.clear();
-  */
 }
 
 void DownloadManager::updateChunkMap() {
