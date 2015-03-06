@@ -1,4 +1,5 @@
 #include <QDebug>
+#include <QDateTime>
 
 #include "CommitThread.h"
 
@@ -17,7 +18,17 @@ void CommitThread::enqueueChunk(const QByteArray *data, bool last) {
 }
 
 void CommitThread::run() {
+  QDateTime lastTime{QDateTime::currentDateTime()};
   for (;;) {
+    // Only check for interrupt every half second.
+    QDateTime now{QDateTime::currentDateTime()};
+    if (lastTime.msecsTo(now) > 500) {
+      if (isInterruptionRequested()) {
+        break;
+      }
+      lastTime = now;
+    }
+
     const QByteArray *data{nullptr};
     int amountLeft = 0;
     {

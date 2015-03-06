@@ -129,6 +129,11 @@ void Downloader::start() {
 
 void Downloader::stop() {
   pool.stop();
+
+  if (commitThread.isRunning()) {
+    commitThread.requestInterruption();
+    commitThread.wait();
+  }
 }
 
 void Downloader::onDownloadTaskFinished(int num, Range range, QByteArray *data) {

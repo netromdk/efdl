@@ -132,7 +132,7 @@ void DownloadManager::onChunkFailed(int num, Range range, int httpCode,
   qCritical() << "Aborting..";
 
   cleanup();
-  //  QCoreApplication::exit(-1);
+  QCoreApplication::exit(-1);
 }
 
 void DownloadManager::cleanup() {
