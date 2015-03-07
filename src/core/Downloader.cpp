@@ -75,10 +75,28 @@ void Downloader::start() {
 
   QString type;
   if (reply->hasRawHeader("Content-Type")) {
-    type = reply->rawHeader("Content-Type");
+    type = QString::fromUtf8(reply->rawHeader("Content-Type"));
     int pos;
     if ((pos = type.indexOf(";")) != -1) {
       type = type.mid(0, pos);
+    }
+  }
+
+  // Check if filename is defined.
+  if (reply->hasRawHeader("Content-Disposition")) {
+    QString hdr = QString::fromUtf8(reply->rawHeader("Content-Disposition"));
+    int pos = hdr.indexOf("; filename=");
+    if (pos != -1) {
+      hdr = hdr.mid(pos + 11).trimmed();
+      if (hdr.startsWith("\"")) {
+        hdr = hdr.mid(1);
+      }
+      if (hdr.endsWith("\"")) {
+        hdr.chop(1);
+      }
+      if (!hdr.isEmpty()) {
+        fileOverride = hdr;
+      }
     }
   }
 
@@ -262,7 +280,8 @@ QNetworkReply *Downloader::getHead(const QUrl &url) {
 bool Downloader::setupFile() {
   QFileInfo fi{url.path()};
   QDir dir = (outputDir.isEmpty() ? QDir::current() : outputDir);
-  outputPath = dir.absoluteFilePath(fi.fileName());
+  QString name = (fileOverride.isEmpty() ? fi.fileName() : fileOverride);
+  outputPath = dir.absoluteFilePath(name);
   qDebug() << "Saving to" << qPrintable(outputPath);
 
   auto *file = new QFile{outputPath};
