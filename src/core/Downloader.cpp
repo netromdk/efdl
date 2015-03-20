@@ -351,7 +351,7 @@ void Downloader::createRanges() {
 
   // If more than one chunk/connection requested but ranges are not
   // supported then fallback to one connection.
-  if (size < contentLen && single) {
+  if (single && (conns > 1 || size < contentLen)) {
     qWarning() << "WARN Ranges not supported!";
     qWarning() << "WARN Falling back to single connection!";
     conns = 1;
