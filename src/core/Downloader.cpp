@@ -19,8 +19,8 @@ BEGIN_NAMESPACE
 Downloader::Downloader(const QUrl &url)
   : url{url}, conns{1}, chunks{-1}, chunkSize{-1}, downloadCount{0},
     rangeCount{0}, contentLen{0}, offset{0}, confirm{false}, resume{false},
-    verbose{false}, dryRun{false}, showHeaders{false}, resumable{false},
-    reply{nullptr}
+    verbose{false}, dryRun{false}, showHeaders{false}, single{true},
+    resumable{false}, reply{nullptr}
 {
   connect(&commitThread, &CommitThread::finished,
           this, &Downloader::onCommitThreadFinished);
@@ -45,12 +45,6 @@ void Downloader::start() {
   url = reply->url();
 
   // Find "Content-Length".
-  if (!reply->hasRawHeader("Content-Length")) {
-    qCritical() << "ERROR Invalid response from server. No"
-                << "'Content-Length' header present!";
-    QCoreApplication::exit(-1);
-    return;
-  }
   bool ok;
   contentLen =
     QString::fromUtf8(reply->rawHeader("Content-Length")).toLongLong(&ok);
@@ -63,6 +57,7 @@ void Downloader::start() {
   // Check if the total is different than the Content-Length and, if
   // so, then change to that number.
   if (reply->hasRawHeader("Content-Range")) {
+    single = false;
     QString range = QString::fromUtf8(reply->rawHeader("Content-Range"));
     QStringList elms = range.split("/", QString::SkipEmptyParts);
     if (elms.size() == 2) {
@@ -352,6 +347,15 @@ void Downloader::createRanges() {
     size = (contentLen - offset) / conns;
     constexpr qint64 MB{10485760}; // 10 MB
     if (size > MB) size = MB;
+  }
+
+  // If more than one chunk/connection requested but ranges are not
+  // supported then fallback to one connection.
+  if (size < contentLen && single) {
+    qWarning() << "WARN Ranges not supported!";
+    qWarning() << "WARN Falling back to single connection!";
+    conns = 1;
+    size = contentLen;
   }
 
   if (verbose) {

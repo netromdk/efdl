@@ -63,10 +63,10 @@ void DownloadTask::run() {
   //qDebug() << "CODE" << code;
   //qDebug() << "HEADERS" << rep->rawHeaderPairs();
 
-  // Partial download.
+  // Direct or partial download.
   bool ok = false;
   QByteArray *dataPtr{nullptr};
-  if (code == 206) {
+  if (code == 200 || code == 206) {
     ok = true;
     dataPtr = new QByteArray;
     *dataPtr = rep->readAll();

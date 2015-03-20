@@ -80,7 +80,7 @@ private:
   QString outputDir, outputPath, httpUser, httpPass, fileOverride;
   int conns, chunks, chunkSize, downloadCount, rangeCount;
   qint64 contentLen, offset;
-  bool confirm, resume, verbose, dryRun, showHeaders, resumable;
+  bool confirm, resume, verbose, dryRun, showHeaders, single, resumable;
 
   QNetworkAccessManager netmgr;
   QNetworkReply *reply;
