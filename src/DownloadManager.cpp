@@ -112,6 +112,12 @@ void DownloadManager::onChunkProgress(int num, qint64 received, qint64 total) {
   Chunk *chunk = chunkMap[num];
   bytesDown += received - chunk->range.first;
   chunk->range = Range{received, total};
+
+  // If content length was unknown then set it now that it is known.
+  if (size == -1) {
+    size = total;
+  }
+
   updateChunkMap();
   updateProgress();
 }
@@ -173,6 +179,12 @@ void DownloadManager::updateChunkMap() {
 }
 
 void DownloadManager::updateProgress() {
+  // If content length is not known and chunk information is not yet
+  // known either, then wait to update the progress.
+  if (size == -1) {
+    return;
+  }
+
   // Only update progress every half second.
   QDateTime now{QDateTime::currentDateTime()};
   if (!lastProgress.isNull() && lastProgress.msecsTo(now) < 500) {
@@ -208,7 +220,6 @@ void DownloadManager::updateProgress() {
     }
 
     float perc = (long double)(bytesDown + offset) / (long double)size * 100.0;
-
     sstream << bw << perc << "%" << nw << " | "
             << (!done
                 ? Util::formatSize(bytesDown + offset, 1).toStdString()+ " / "
@@ -219,7 +230,8 @@ void DownloadManager::updateProgress() {
             << nw
             << " | "
             << (!done
-                ? QString("chunk %1 / %2").arg(chunksFinished).arg(chunksAmount).toStdString()
+                ? QString("chunk %1 / %2").arg(chunksFinished)
+                .arg(chunksAmount).toStdString()
                 : QString("%1 chunks").arg(chunksAmount).toStdString())
             << " | "
             << bw

@@ -19,13 +19,16 @@ void DownloadTask::onProgress(qint64 received, qint64 total) {
 }
 
 void DownloadTask::run() {
-  qint64 start = range.first, end = range.second;
-  QString rangeHdr = QString("bytes=%1-%2").arg(start).arg(end);
-  //qDebug() << "RANGE" << qPrintable(rangeHdr);
-
   QNetworkRequest req{url};
-  req.setRawHeader("Range", rangeHdr.toUtf8());
   req.setRawHeader("Accept-Encoding", "identity");
+
+  // Only set range information if appropriate.
+  qint64 start = range.first, end = range.second;
+  if (!(start == 0 && end == 0)) {
+    QString rangeHdr = QString("bytes=%1-%2").arg(start).arg(end);
+    //qDebug() << "RANGE" << qPrintable(rangeHdr);
+    req.setRawHeader("Range", rangeHdr.toUtf8());
+  }
 
   if (!httpUser.isEmpty() && !httpPass.isEmpty()) {
     req.setRawHeader("Authorization",

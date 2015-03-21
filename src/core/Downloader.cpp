@@ -18,7 +18,7 @@ BEGIN_NAMESPACE
 
 Downloader::Downloader(const QUrl &url)
   : url{url}, conns{1}, chunks{-1}, chunkSize{-1}, downloadCount{0},
-    rangeCount{0}, contentLen{0}, offset{0}, confirm{false}, resume{false},
+    rangeCount{0}, contentLen{-1}, offset{0}, confirm{false}, resume{false},
     verbose{false}, dryRun{false}, showHeaders{false}, single{true},
     resumable{false}, reply{nullptr}
 {
@@ -44,14 +44,17 @@ void Downloader::start() {
   }
   url = reply->url();
 
-  // Find "Content-Length".
+  // Find "Content-Length". If not found then it keeps operating (with
+  // a single connection) not knowing the total size but it will
+  // eventually be known from the first chunk progress information.
   bool ok;
-  contentLen =
-    QString::fromUtf8(reply->rawHeader("Content-Length")).toLongLong(&ok);
-  if (!ok || contentLen == 0) {
-    qCritical() << "ERROR Invalid content length:" << contentLen;
-    QCoreApplication::exit(-1);
-    return;
+  if (reply->hasRawHeader("Content-Length")) {
+    contentLen =
+      QString::fromUtf8(reply->rawHeader("Content-Length")).toLongLong(&ok);
+    if (!ok || contentLen == 0) {
+      qCritical() << "ERROR Invalid content length:" << contentLen;
+      contentLen = -1;
+    }
   }
 
   // Check if the total is different than the Content-Length and, if
@@ -95,7 +98,14 @@ void Downloader::start() {
     }
   }
 
-  qDebug() << "File size" << qPrintable(Util::formatSize(contentLen, 1))
+  QString fsize;
+  if (contentLen == -1) {
+    fsize = "Unknown";
+  }
+  else {
+    fsize = Util::formatSize(contentLen, 1);
+  }
+  qDebug() << "File size" << qPrintable(fsize)
            << qPrintable(!type.isEmpty() ? "[" + type + "]" : "");
 
   // Check for header "Accept-Ranges" and whether it has "bytes"
@@ -112,6 +122,11 @@ void Downloader::start() {
 
   if (!resumable && resume) {
     qCritical() << "ERROR Cannot resume because server doesn't support it!";
+    QCoreApplication::exit(-1);
+    return;
+  }
+  else if (resumable && resume && contentLen == -1) {
+    qCritical() << "ERROR Cannot resume because the content length is unknown!";
     QCoreApplication::exit(-1);
     return;
   }
@@ -349,28 +364,39 @@ void Downloader::createRanges() {
     if (size > MB) size = MB;
   }
 
-  // If more than one chunk/connection requested but ranges are not
-  // supported then fallback to one connection.
-  if (single && (conns > 1 || size < contentLen)) {
-    qWarning() << "WARN Ranges not supported!";
+  // If content length is not known then enqueue the "zero" range to
+  // inform the download task to fetch all of it.
+  if (contentLen == -1) {
+    qWarning() << "WARN Content length not known!";
     qWarning() << "WARN Falling back to single connection!";
     conns = 1;
-    size = contentLen;
+    ranges.enqueue(Range(0, 0));
+    rangeCount = 1;
   }
-
-  if (verbose) {
-    qDebug() << "CHUNK SIZE" << qPrintable(Util::formatSize(size, 1));
-  }
-
-  for (qint64 start = offset; start < contentLen; start += size) {
-    qint64 end = start + size;
-    if (end >= contentLen) {
-      end = contentLen;
+  else {
+    // If more than one chunk/connection requested but ranges are not
+    // supported then fallback to one connection.
+    if (single && (conns > 1 || size < contentLen)) {
+      qWarning() << "WARN Ranges not supported!";
+      qWarning() << "WARN Falling back to single connection!";
+      conns = 1;
+      size = contentLen;
     }
-    ranges.enqueue(Range{start, end - 1});
-    chunksMap[start] = nullptr;
+
+    if (verbose) {
+      qDebug() << "CHUNK SIZE" << qPrintable(Util::formatSize(size, 1));
+    }
+
+    for (qint64 start = offset; start < contentLen; start += size) {
+      qint64 end = start + size;
+      if (end >= contentLen) {
+        end = contentLen;
+      }
+      ranges.enqueue(Range{start, end - 1});
+      chunksMap[start] = nullptr;
+    }
+    rangeCount = ranges.size();
   }
-  rangeCount = ranges.size();
 
   if (verbose) {
     qDebug() << "CHUNKS" << rangeCount;
